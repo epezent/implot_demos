@@ -2,7 +2,7 @@
 
 This repository contains toy [ImPlot](https://github.com/epezent/implot) applications that demonstrate some of the library's functionality. The demos here are more sophisticated than those provided in `implot_demo.h`, and may rely on third-party libraries that would otherwise clutter ImPlot's main repository. Use these examples as a starting point for your application and to familiarize yourself with ImPlot, but do not assume all code (e.g. signal processing algorithms) to be perfectly correct or optimal.
 
-<img src="https://raw.githubusercontent.com/epezent/implot_demos/master/screenshots/filt.png" height="225"> <img src="https://github.com/epezent/implot_demos/blob/master/screenshots/spec.png" height="225">
+<img src="https://raw.githubusercontent.com/epezent/implot_demos/master/screenshots/filt.png" height="250"> <img src="https://github.com/epezent/implot_demos/blob/master/screenshots/spec.png" height="250">
 
 
 
