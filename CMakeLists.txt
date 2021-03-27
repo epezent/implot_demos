@@ -14,7 +14,6 @@ FetchContent_MakeAvailable(glfw)
 
 FetchContent_Declare(iir GIT_REPOSITORY https://github.com/berndporr/iir1) 
 FetchContent_MakeAvailable(iir)
-set_target_properties(iirdemo ecg50hzfilt benchmark PROPERTIES EXCLUDE_FROM_ALL 1 EXCLUDE_FROM_DEFAULT_BUILD 1)
 
 # LOCAL LIBS
 set(KISS_SRC "3rdparty/kissfft/kiss_fft.h" 
