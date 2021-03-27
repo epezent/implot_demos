@@ -86,7 +86,7 @@ include_directories(../implot/)
 add_library(app 
   common/App.h
   common/App.cpp
-  common/Fonts.h
+  common/Fonts/Fonts.h
   common/Fonts/FontAwesome5.cpp
   common/Fonts/RobotoRegular.cpp
   common/Fonts/RobotoBold.cpp

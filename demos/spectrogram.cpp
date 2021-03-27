@@ -15,6 +15,12 @@
 #include <vector>
 #include <complex>
 
+namespace ImGui {
+bool SliderDouble(const char* label, double* v, double v_min, double v_max, const char* format = NULL, ImGuiSliderFlags flags = 0) {
+    return SliderScalar(label, ImGuiDataType_Double, v, &v_min, &v_max, format, flags);
+}
+}
+
 template <typename T>
 static inline T remap(T x, T x0, T x1, T y0, T y1) { return y0 + (x - x0) * (y1 - y0) / (x1 - x0); }
 
@@ -60,11 +66,10 @@ struct ImPlotSpectrogram : App {
     std::vector<float> m_samples;                // local copy of audio file samples
     std::vector<float> m_spectrogram;            // spectrogram matrix data
 
-    float  m_t     = 0;                          // current playback time normalized to [0 1]
     double m_time  = 0;                          // current playback time in seconds
 
-    float m_min_db = -10;                        // minimum spectrogram dB
-    float m_max_db =  40;                        // maximum spectrogram dB
+    double m_min_db = -25;                        // minimum spectrogram dB
+    double m_max_db =  40;                        // maximum spectrogram dB
 
     // Consutrctor
     ImPlotSpectrogram(const std::string& filepath) :
@@ -118,32 +123,37 @@ struct ImPlotSpectrogram : App {
     // Update function called once per frame
     void update() override {
 
-        if (g_playing) {
+        if (g_playing && m_time <= m_duration) {
             m_time += ImGui::GetIO().DeltaTime;
-            m_t     = std::clamp((float)(m_time/m_duration),0.0f,1.0f);
-            update_spectrogram(m_t);
+            m_time = std::clamp(m_time, 0.0, m_duration);
+            update_spectrogram(m_time);
         }
 
         ImGui::SetNextWindowPos({0,0},ImGuiCond_Always);
         ImGui::SetNextWindowSize({WIN_W,WIN_H},ImGuiCond_Always);
         ImGui::Begin("ImPlot Spectrogram",nullptr,ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoTitleBar);
-        if (ImGui::Button(g_playing ? ICON_FA_PAUSE : ICON_FA_PLAY))
+        
+        ImGui::TextUnformatted(m_filename.c_str());
+        ImGui::SameLine(560);
+        ImGui::Text("FPS: %.2f", ImGui::GetIO().Framerate);
+        
+        if (ImGui::Button(g_playing ? ICON_FA_PAUSE : ICON_FA_PLAY)) 
             g_playing = !g_playing;
         ImGui::SameLine();
         if (ImGui::Button(ICON_FA_STEP_BACKWARD))
             seek(0);
         ImGui::SameLine();
         if (ImGui::Button(ICON_FA_STEP_FORWARD))
-            seek(1);
+            seek(m_duration);
         
         ImGui::SameLine();
-        ImGui::TextUnformatted(m_filename.c_str());
-        ImGui::SameLine(560);
-        ImGui::Text("FPS: %.2f", ImGui::GetIO().Framerate);
-        if (ImGui::SliderFloat("Scrub",&m_t,0,1))
-            seek(m_t);
-        const float tmin = (float)(m_duration-T)*m_t;
-        const float tmax = tmin + T;
+ 
+        ImGui::SameLine();
+        ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+        if (ImGui::SliderDouble("##Scrub", &m_time, 0, m_duration, "%.3f s"))
+            seek(m_time);
+        const double tmin = (m_duration-T)*(m_time/m_duration);
+        const double tmax = tmin + T;
         ImPlot::SetNextPlotLimitsY(0,20);
         ImPlot::SetNextPlotLimitsX(tmin, tmax, ImGuiCond_Always);
         ImPlot::SetNextPlotFormatY("%g kHz");
@@ -152,7 +162,7 @@ struct ImPlotSpectrogram : App {
         if (ImPlot::BeginPlot("##Plot1",nullptr,nullptr,{w,h},ImPlotFlags_NoMousePos,ImPlotAxisFlags_NoTickLabels,ImPlotAxisFlags_Lock)) {
             ImPlot::PlotHeatmap("##Heat",m_spectrogram.data(),N_FRQ,N_BIN,m_min_db,m_max_db,NULL,{tmin,0},{tmax,m_fft_frq[N_FRQ-1]/1000});
             if (ImPlot::DragLineX("t",&m_time,true,{1,1,1,1}))
-                seek((float)(m_time/m_duration));
+                seek(m_time);
             ImPlot::EndPlot();
         }
         ImGui::SameLine();
@@ -160,21 +170,22 @@ struct ImPlotSpectrogram : App {
         if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right))
             ImGui::OpenPopup("Range");
         if (ImGui::BeginPopup("Range")) {
-            ImGui::DragFloatRange2("Range [dB]",&m_min_db,&m_max_db);
+            ImGui::SliderDouble("Max",&m_max_db,m_min_db,100);
+            ImGui::SliderDouble("Min",&m_min_db,-100,m_max_db);
             ImGui::EndPopup();
         }
 
         ImPlot::PushStyleVar(ImPlotStyleVar_PlotMinSize,{0,0});
         ImPlot::SetNextPlotLimits(0,1,-1,1,ImGuiCond_Always);
         if (ImPlot::BeginPlot("##Plot2",nullptr,nullptr,{-1,-1},ImPlotFlags_CanvasOnly,ImPlotAxisFlags_NoDecorations,ImPlotAxisFlags_NoDecorations)) {
-            int idx = (int)((m_samples.size() - N_FFT) * m_t);
+            int idx = (int)((m_samples.size() - N_FFT) * (m_time/m_duration));
             idx -= idx % N_FFT;
             kiss_fftr(m_fft, &m_samples[idx], reinterpret_cast<kiss_fft_cpx*>(m_fft_out));
             auto getter1 = [](void* data, int i) {
-                std::complex<float>* fft_out = (std::complex<float>*)data;
-                double db = 20*log10(std::abs(fft_out[i]));
+                ImPlotSpectrogram& spec = *(ImPlotSpectrogram*)(data);
+                double db = 20*log10(std::abs(spec.m_fft_out[i]));
                 double x = remap01((double)i,0.0,(double)(N_FRQ-1));
-                double y = remap(db,-10.0,40.0,-1.0,1.0);
+                double y = remap(db,spec.m_min_db,spec.m_max_db,-1.0,1.0);
                 return ImPlotPoint(x,y);
             };
             auto getter2 = [](void*, int i) {
@@ -182,7 +193,7 @@ struct ImPlotSpectrogram : App {
                 return ImPlotPoint(x,-1.0);
             };
             ImPlot::SetNextFillStyle({1,1,1,0.1f});
-            ImPlot::PlotShadedG("##FreqDomain",getter1,m_fft_out,getter2,nullptr,N_FRQ);
+            ImPlot::PlotShadedG("##FreqDomain",getter1,this,getter2,nullptr,N_FRQ);
             ImPlot::SetNextLineStyle(ImPlot::SampleColormap(0.8f));
             ImPlot::PlotLine("##TimeDomain",&m_samples[idx],N_FFT,1.0/(N_FFT-1));
             ImPlot::EndPlot();
@@ -191,8 +202,9 @@ struct ImPlotSpectrogram : App {
         ImGui::End();
     };
 
-    // Update spectrogram matrix at playback time t = [0 1]
-    void update_spectrogram(float t) {
+    // Update spectrogram matrix at playback time
+    void update_spectrogram(double time) {
+        double t = time / m_duration;
         int idx = (int)((m_samples.size() - N_BIN*N_FFT) * t);
         idx -= idx % N_FFT;
         for (int b = 0; b < N_BIN; ++b) {
@@ -203,12 +215,12 @@ struct ImPlotSpectrogram : App {
         }
     }
 
-    // Seek to playback time t = [0 1]
-    void seek(float t) {
-        m_t = t;
+    // Seek to playback time
+    void seek(double time) {
+        m_time = time;
         if (!g_playing)
-            update_spectrogram(m_t);
-        m_time = t * m_duration;
+            update_spectrogram(time);
+        double t = time / m_duration;
         auto frame = (int)((m_samples.size()-1) * t);
         {
             std::lock_guard<std::mutex> lock(g_mtx);
