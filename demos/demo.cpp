@@ -1,4 +1,3 @@
-#define APP_USE_OPENGL
 #include "App.hpp"
 
 struct ImPlotDemo : App {

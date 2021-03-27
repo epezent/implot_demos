@@ -25,5 +25,3 @@ cmake --build . --config Release
 |---|---|
 |`demo.cpp`|Main demo. Displays the ImPlot and ImGui library supplied demo windows.|
 |`spectogram.cpp`|Realtime audio spectogram and visualizer with device playback. Pass in an audio file at the command line: `./spectogram.exe ./aphex_twin_formula.wav`
-
-**Note:** Ensure that the `./resources/fonts/` folder is copied to you binary output location!

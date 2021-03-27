@@ -1,4 +1,3 @@
-#define APP_USE_OPENGL
 #include "App.hpp"
 
 #include <kiss_fftr.h>
@@ -11,6 +10,12 @@
 #include <filesystem>
 #include <vector>
 #include <complex>
+
+template <typename T>
+static inline T remap(T x, T x0, T x1, T y0, T y1) { return y0 + (x - x0) * (y1 - y0) / (x1 - x0); }
+
+template <typename T>
+static inline T remap01(T x, T x0, T x1) { return (x - x0) / (x1 - x0); }
 
 std::atomic_bool g_playing{false}; // should audio play?
 std::mutex       g_mtx;            // mutex to protect decoder data
@@ -49,7 +54,7 @@ struct ImPlotSpectogram : App {
     std::string        m_filename;               // filename of audio file provided
     double             m_duration;               // length of audio file in seconds
     std::vector<float> m_samples;                // local copy of audio file samples
-    std::vector<float> m_spectogram;             // spectogram matric data
+    std::vector<float> m_spectogram;             // spectogram matrix data
 
     float  m_t     = 0;                          // current playback time normalized to [0 1]
     double m_time  = 0;                          // current playback time in seconds
@@ -96,7 +101,7 @@ struct ImPlotSpectogram : App {
         if (ma_device_start(&m_device) != MA_SUCCESS)
             std::runtime_error("Failed to start playback device.");
         // set colormap
-        ImPlot::GetStyle().Colormap = ImPlotColormap_Viridis;
+        ImPlot::GetStyle().Colormap = ImPlotColormap_Plasma;
     }
 
     // Destructor
@@ -111,31 +116,35 @@ struct ImPlotSpectogram : App {
 
         if (g_playing) {
             m_time += ImGui::GetIO().DeltaTime;
-            m_t     = ImClamp((float)(m_time/m_duration),0.0f,1.0f);
+            m_t     = std::clamp((float)(m_time/m_duration),0.0f,1.0f);
             update_spectogram(m_t);
         }
 
-        ImGui::SetNextWindowPos({0,0});
-        ImGui::SetNextWindowSize({WIN_W,WIN_H});
+        ImGui::SetNextWindowPos({0,0},ImGuiCond_Always);
+        ImGui::SetNextWindowSize({WIN_W,WIN_H},ImGuiCond_Always);
         ImGui::Begin("ImPlot Spectogram",nullptr,ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoTitleBar);
-        if (ImGui::Button(g_playing ? "Stop" : "Play", {50,0}))
+        if (ImGui::Button(g_playing ? ICON_FA_PAUSE : ICON_FA_PLAY))
             g_playing = !g_playing;
+        ImGui::SameLine();
+        if (ImGui::Button(ICON_FA_STEP_BACKWARD))
+            seek(0);
+        ImGui::SameLine();
+        if (ImGui::Button(ICON_FA_STEP_FORWARD))
+            seek(1);
+        
         ImGui::SameLine();
         ImGui::TextUnformatted(m_filename.c_str());
         ImGui::SameLine(560);
         ImGui::Text("FPS: %.2f", ImGui::GetIO().Framerate);
         if (ImGui::SliderFloat("Scrub",&m_t,0,1))
             seek(m_t);
-        static bool show_frame = true;
-        ImGui::SameLine();
-        ImGui::Checkbox("Show Frame",&show_frame);
         const float tmin = (float)(m_duration-T)*m_t;
         const float tmax = tmin + T;
         ImPlot::SetNextPlotLimitsY(0,20);
         ImPlot::SetNextPlotLimitsX(tmin, tmax, ImGuiCond_Always);
         ImPlot::SetNextPlotFormatY("%g kHz");
         const float w  = ImGui::GetContentRegionAvail().x - 100 - ImGui::GetStyle().ItemSpacing.x;
-        const float h = show_frame ? 320.0f : -1.0f;
+        const float h = 320.0f;
         if (ImPlot::BeginPlot("##Plot1",nullptr,nullptr,{w,h},ImPlotFlags_NoMousePos,ImPlotAxisFlags_NoTickLabels,ImPlotAxisFlags_Lock)) {
             ImPlot::PlotHeatmap("##Heat",m_spectogram.data(),N_FRQ,N_BIN,m_min_db,m_max_db,NULL,{tmin,0},{tmax,m_fft_frq[N_FRQ-1]/1000});
             if (ImPlot::DragLineX("t",&m_time,true,{1,1,1,1}))
@@ -160,12 +169,12 @@ struct ImPlotSpectogram : App {
             auto getter1 = [](void* data, int i) {
                 std::complex<float>* fft_out = (std::complex<float>*)data;
                 double db = 20*log10(std::abs(fft_out[i]));
-                double x = ImRemap01((double)i,0.0,(double)(N_FRQ-1));
-                double y = ImRemap(db,-10.0,40.0,-1.0,1.0);
+                double x = remap01((double)i,0.0,(double)(N_FRQ-1));
+                double y = remap(db,-10.0,40.0,-1.0,1.0);
                 return ImPlotPoint(x,y);
             };
             auto getter2 = [](void*, int i) {
-                double x = ImRemap01((double)i,0.0,(double)(N_FRQ-1));
+                double x = remap01((double)i,0.0,(double)(N_FRQ-1));
                 return ImPlotPoint(x,-1.0);
             };
             ImPlot::SetNextFillStyle({1,1,1,0.1f});
