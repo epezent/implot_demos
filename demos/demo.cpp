@@ -1,4 +1,8 @@
-#include "App.hpp"
+// Demo:   demo.cpp
+// Author: Evan Pezent (evanpezent.com)
+// Date:   3/26/2021
+
+#include "App.h"
 
 struct ImPlotDemo : App {
     using App::App;

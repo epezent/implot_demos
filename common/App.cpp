@@ -1,4 +1,4 @@
-#include "App.hpp"
+#include "App.h"
 #include "imgui_internal.h"
 
 void StyleApp() {
@@ -9,7 +9,6 @@ void StyleApp() {
     static const ImVec4 accent_light = ImVec4(0.635f, 0.686f, 0.863f, 1.000f);
     static const ImVec4 active       = ImVec4(0.107f, 0.118f, 0.157f, 1.000f);
     static const ImVec4 attention    = ImVec4(0.821f, 1.000f, 0.000f, 1.000f);
-
 
     auto& style = ImGui::GetStyle();
     style.WindowPadding = {6,6};

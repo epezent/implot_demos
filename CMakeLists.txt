@@ -39,8 +39,6 @@ set(IMGUI_HEADERS
     ../imgui/examples/libs/gl3w/GL/glcorearb.h
     ../imgui/backends/imgui_impl_glfw.h
     ../imgui/backends/imgui_impl_opengl3.h
-    # ../imgui/backends/imgui_impl_win32.h
-    # ../imgui/backends/imgui_impl_dx11.h
 )
 
 set(IMGUI_SRC
@@ -52,8 +50,6 @@ set(IMGUI_SRC
     ../imgui/examples/libs/gl3w/GL/gl3w.c
     ../imgui/backends/imgui_impl_glfw.cpp
     ../imgui/backends/imgui_impl_opengl3.cpp
-    # ../imgui/backends/imgui_impl_win32.cpp
-    # ../imgui/backends/imgui_impl_dx11.cpp
 )
 
 find_package(OpenGL REQUIRED)
@@ -88,9 +84,9 @@ include_directories(../implot/)
 ###############################################################################
 
 add_library(app 
-  common/App.hpp
+  common/App.h
   common/App.cpp
-  common/Fonts.hpp
+  common/Fonts.h
   common/Fonts/FontAwesome5.cpp
   common/Fonts/RobotoRegular.cpp
   common/Fonts/RobotoBold.cpp
@@ -110,14 +106,14 @@ target_link_libraries(app implot)
 add_executable(demo "demos/demo.cpp")
 target_link_libraries(demo app)
 
-# spectogram demo
-add_executable(spectogram "demos/spectogram.cpp" ${KISS_SRC})              
-target_link_libraries(spectogram app)        
-target_compile_features(spectogram PRIVATE cxx_std_17)
-add_custom_command(TARGET spectogram POST_BUILD  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/resources/audio/aphex_twin_formula.wav ${CMAKE_CURRENT_BINARY_DIR}/aphex_twin_formula.wav)
-
 # filter demo
 add_executable(filter "demos/filter.cpp" ${KISS_SRC})
 target_link_libraries(filter app iir::iir_static)
 target_compile_features(filter PRIVATE cxx_std_17)
 target_compile_definitions(filter PRIVATE kiss_fft_scalar=double NOMINMAX)
+
+# spectrogram demo
+add_executable(spectrogram "demos/spectrogram.cpp" ${KISS_SRC})              
+target_link_libraries(spectrogram app)        
+target_compile_features(spectrogram PRIVATE cxx_std_17)
+add_custom_command(TARGET spectrogram POST_BUILD  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/resources/audio/aphex_twin_formula.wav ${CMAKE_CURRENT_BINARY_DIR}/aphex_twin_formula.wav)

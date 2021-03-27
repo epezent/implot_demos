@@ -1,4 +1,8 @@
-#include "App.hpp"
+// Demo:   filter.cpp
+// Author: Evan Pezent (evanpezent.com)
+// Date:   3/26/2021
+
+#include "App.h"
 
 #include <ETFE.hpp>
 #include <Iir.h>
