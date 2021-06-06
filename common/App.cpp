@@ -61,8 +61,6 @@ void StyleApp() {
     colors[ImGuiCol_TabActive]              = accent_dark;
     colors[ImGuiCol_TabUnfocused]           = ImVec4(0.24f, 0.23f, 0.29f, 1.00f);
     colors[ImGuiCol_TabUnfocusedActive]     = active;
-    colors[ImGuiCol_DockingPreview]         = ImVec4(0.85f, 0.85f, 0.85f, 0.28f);
-    colors[ImGuiCol_DockingEmptyBg]         = ImVec4(0.38f, 0.38f, 0.38f, 1.00f);
     colors[ImGuiCol_PlotLines]              = accent_light;
     colors[ImGuiCol_PlotLinesHovered]       = active;
     colors[ImGuiCol_PlotHistogram]          = accent_light;
@@ -78,6 +76,10 @@ void StyleApp() {
     colors[ImGuiCol_NavWindowingHighlight]  = ImVec4(1.00f, 1.00f, 1.00f, 0.70f);
     colors[ImGuiCol_NavWindowingDimBg]      = ImVec4(0.80f, 0.80f, 0.80f, 0.20f);
     colors[ImGuiCol_ModalWindowDimBg]       = ImVec4(1.00f, 0.98f, 0.95f, 0.73f);
+#ifdef IMGUI_HAS_DOCK
+    colors[ImGuiCol_DockingPreview]         = ImVec4(0.85f, 0.85f, 0.85f, 0.28f);
+    colors[ImGuiCol_DockingEmptyBg]         = ImVec4(0.38f, 0.38f, 0.38f, 1.00f);
+#endif
 
     ImVec4* pcolors = ImPlot::GetStyle().Colors;
     pcolors[ImPlotCol_Line]          = IMPLOT_AUTO_COL;
@@ -178,7 +180,7 @@ static void glfw_error_callback(int error, const char* description) {
         const char* glsl_version = "#version 130";
         glfwWindowHint(GLFW_SAMPLES, 4);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
         //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+ only
         //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);            // 3.0+ only
     #endif
@@ -266,6 +268,8 @@ static void glfw_error_callback(int error, const char* description) {
         ImStrncpy(font_cfg.Name, "Roboto Mono Regular", 40);
         Fonts[font_cfg.Name] = io.Fonts->AddFontFromMemoryTTF(RobotoMono_Regular_ttf, RobotoMono_Regular_ttf_len, 15.0f, &font_cfg);
         io.Fonts->AddFontFromMemoryTTF(fa_solid_900_ttf, fa_solid_900_ttf_len, 14.0f, &icons_config,fa_ranges);
+
+        // ImGui::GetIO().BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset;
        
         // static const ImWchar fab_ranges[] = {ICON_MIN_FAB, ICON_MAX_FAB, 0};
         // io.Fonts->AddFontFromMemoryTTF(fa_brands_400_ttf, fa_brands_400_ttf_len, 14.0f, &icons_config, fab_ranges);
