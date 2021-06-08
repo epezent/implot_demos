@@ -38,6 +38,7 @@ set(IMGUI_HEADERS
     ../imgui/examples/libs/gl3w/GL/glcorearb.h
     ../imgui/backends/imgui_impl_glfw.h
     ../imgui/backends/imgui_impl_opengl3.h
+    ../imgui/misc/cpp/imgui_stdlib.h
 )
 
 set(IMGUI_SRC
@@ -49,6 +50,7 @@ set(IMGUI_SRC
     ../imgui/examples/libs/gl3w/GL/gl3w.c
     ../imgui/backends/imgui_impl_glfw.cpp
     ../imgui/backends/imgui_impl_opengl3.cpp
+    ../imgui/misc/cpp/imgui_stdlib.cpp
 )
 
 find_package(OpenGL REQUIRED)
@@ -57,7 +59,7 @@ add_library(imgui ${IMGUI_HEADERS} ${IMGUI_SRC})
 target_link_libraries(imgui PUBLIC glfw OpenGL::GL)
 target_compile_definitions(imgui PRIVATE IMGUI_DLL_EXPORT)
 
-include_directories(../imgui/ ../imgui/examples ../imgui/examples/libs/gl3w ../imgui/backends)
+include_directories(../imgui/ ../imgui/examples ../imgui/examples/libs/gl3w ../imgui/backends ../imgui/misc/cpp)
 
 ###############################################################################
 # IMPLOT
@@ -104,6 +106,12 @@ target_link_libraries(app implot)
 # main ImPlot demo
 add_executable(demo "demos/demo.cpp")
 target_link_libraries(demo app)
+
+# imdesmos demo
+add_executable(imdesmos "demos/imdesmos.cpp")
+target_link_libraries(imdesmos app)
+target_include_directories(imdesmos PRIVATE "3rdparty")
+set_target_properties(imdesmos PROPERTIES COMPILE_FLAGS "/bigobj")
 
 # filter demo
 add_executable(filter "demos/filter.cpp" ${KISS_SRC})
