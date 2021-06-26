@@ -132,7 +132,7 @@ struct ImPlotSpectrogram : App {
         ImGui::SetNextWindowPos({0,0},ImGuiCond_Always);
         ImGui::SetNextWindowSize({WIN_W,WIN_H},ImGuiCond_Always);
         ImGui::Begin("ImPlot Spectrogram",nullptr,ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoTitleBar);
-        
+
         ImGui::TextUnformatted(m_filename.c_str());
         ImGui::SameLine(560);
         ImGui::Text("FPS: %.2f", ImGui::GetIO().Framerate);

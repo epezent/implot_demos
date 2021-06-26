@@ -66,11 +66,11 @@ include_directories(../imgui/ ../imgui/examples ../imgui/examples/libs/gl3w ../i
 ###############################################################################
 
 set(IMPLOT_HEADERS ../implot/implot.h ../implot/implot_internal.h)
-set(IMPLOT_SRC     ../implot/implot.cpp ../implot/implot_items.cpp ../implot/implot_demo.cpp)
+set(IMPLOT_SRC     ../implot/implot.cpp ../implot/implot_items.cpp ../implot/implot_demo.cpp) #  ../implot/backends/implot_impl_opengl3.cpp)
 
 add_library(implot ${IMPLOT_HEADERS} ${IMPLOT_SRC})
 target_link_libraries(implot PUBLIC imgui)
-target_compile_definitions(implot PUBLIC IMPLOT_DEBUG IMPLOT_DLL_EXPORT)
+target_compile_definitions(implot PUBLIC IMPLOT_DEBUG IMPLOT_DLL_EXPORT IMPLOT_BACKEND_ENABLE_OPENGL3 IMGUI_IMPL_OPENGL_LOADER_GL3W)
 set_property(TARGET implot PROPERTY CXX_STANDARD 11)
 if(MSVC)
   target_compile_options(implot PRIVATE /W4 /WX)

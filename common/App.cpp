@@ -110,9 +110,9 @@ void StyleApp() {
     ImPlot::GetStyle().DigitalBitHeight = 20;
 
     auto& pstyle = ImPlot::GetStyle();
-    pstyle.PlotPadding = pstyle.LegendPadding = {12,12};
-    pstyle.LabelPadding = pstyle.LegendInnerPadding = {6,6};
-    pstyle.LegendSpacing = {2,2};
+    pstyle.PlotPadding   = pstyle.LegendPadding = {12,12};
+    pstyle.LabelPadding  = pstyle.LegendInnerPadding = {6,6};
+    pstyle.LegendSpacing = {10,2};
 }
 
 #define APP_USE_OPENGL

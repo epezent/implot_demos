@@ -8,7 +8,8 @@
 #include <imgui_stdlib.h>
 
 template <typename T>
-static inline T remap(T x, T x0, T x1, T y0, T y1) { return y0 + (x - x0) * (y1 - y0) / (x1 - x0); }
+static inline T remap(T x, T x0, T x1, T y0, T y1) 
+{ return y0 + (x - x0) * (y1 - y0) / (x1 - x0); }
 
 struct Expression {
     Expression() {
