@@ -156,7 +156,7 @@ static void glfw_error_callback(int error, const char* description) {
 }
 
 
-    App::App(int w, int h, std::string title) {
+    App::App(int w, int h, std::string title, bool vsync) {
 #ifdef _DEBUG
         title += " - OpenGL - Debug";
 #else
@@ -192,7 +192,7 @@ static void glfw_error_callback(int error, const char* description) {
             abort();
         }
         glfwMakeContextCurrent(Window);
-        glfwSwapInterval(1); // Enable vsync
+        glfwSwapInterval(vsync ? 1 : 0); // Enable vsync
 
         // Initialize OpenGL loader
     #if defined(IMGUI_IMPL_OPENGL_LOADER_GL3W)
@@ -285,6 +285,7 @@ static void glfw_error_callback(int error, const char* description) {
     }
 
     void App::run() {
+        init();
         // Main loop
         while (!glfwWindowShouldClose(Window)) {
             glfwPollEvents();
@@ -304,6 +305,13 @@ static void glfw_error_callback(int error, const char* description) {
             glfwSwapBuffers(Window);
         }
     }
+
+    ImVec2 App::get_window_size() const {
+        int w, h;
+        glfwGetWindowSize(Window, &w, &h);
+        return ImVec2(w,h);
+    }
+
 
 #elif defined(APP_USE_DX11)
 
