@@ -18,9 +18,16 @@ FetchContent_MakeAvailable(iir)
 FetchContent_Declare(curl GIT_REPOSITORY https://github.com/curl/curl) 
 FetchContent_MakeAvailable(curl)
 
-set(CPR_BUILD_TESTS_SSL OFF CACHE BOOL "" FORCE)
-FetchContent_Declare(cpr GIT_REPOSITORY https://github.com/whoshuu/cpr.git)
-FetchContent_MakeAvailable(cpr)
+FetchContent_Declare(curl
+URL                    https://github.com/curl/curl/releases/download/curl-7_75_0/curl-7.75.0.tar.xz
+URL_HASH               SHA256=fe0c49d8468249000bda75bcfdf9e30ff7e9a86d35f1a21f428d79c389d55675 # the file hash for curl-7.75.0.tar.xz
+USES_TERMINAL_DOWNLOAD TRUE)   # <---- This is needed only for Ninja to show download progress
+FetchContent_MakeAvailable(curl)
+
+add_library(curl_int INTERFACE)
+target_link_libraries(curl_int INTERFACE libcurl)
+target_include_directories(curl_int INTERFACE ${curl_SOURCE_DIR}/include ${curl_BINARY_DIR}/include/curl)
+add_library(CURL::libcurl ALIAS curl_int)
 
 # LOCAL LIBS
 set(KISS_SRC "3rdparty/kissfft/kiss_fft.h" 
@@ -73,11 +80,7 @@ include_directories(../imgui/ ../imgui/examples ../imgui/examples/libs/gl3w ../i
 ###############################################################################
 
 set(IMPLOT_HEADERS ../implot/implot.h ../implot/implot_internal.h)
-set(IMPLOT_SRC     ../implot/implot.cpp ../implot/implot_items.cpp ../implot/implot_demo.cpp) 
-
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../implot/backends/implot_impl_opengl3.cpp")
-  list(APPEND IMPLOT_SRC ../implot/backends/implot_impl_opengl3.cpp)
-endif()
+set(IMPLOT_SRC     ../implot/implot.cpp ../implot/implot_items.cpp ../implot/implot_demo.cpp) # ../implot/backends/implot_impl_opengl3.cpp) 
 
 add_library(implot ${IMPLOT_HEADERS} ${IMPLOT_SRC})
 target_link_libraries(implot PUBLIC imgui)
@@ -132,7 +135,8 @@ add_executable(demo "demos/demo.cpp")
 target_link_libraries(demo app)
 
 add_executable(maps "demos/maps.cpp")
-target_link_libraries(maps app cpr)
+target_link_libraries(maps app CURL::libcurl)
+target_compile_features(maps PRIVATE cxx_std_17)
 
 # GPU acceleration
 add_executable(gpu "demos/gpu.cpp")
