@@ -7,6 +7,8 @@ This repository contains toy [ImPlot](https://github.com/epezent/implot) applica
 - OpenGL
 - C++17 compiler
 
+**Note**: Compiled and tested with MSVC. Minor changes to `CMakeLists.txt` may be required to support other compilers. If you make a fix, please submit a PR.
+
 ## Build Instructions
 1. Clone this repository, [ImPlot](https://github.com/epezent/implot), and [ImGui](https://github.com/ocornut/imgui) into a parent directory (name doesn't matter):
 

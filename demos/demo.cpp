@@ -7,7 +7,8 @@
 struct ImPlotDemo : App {
     using App::App;
     void update() override {
-        ImPlot::ShowDemoWindow();    
+        ImPlot::ShowDemoWindow();   
+        ImGui::ShowDemoWindow(); 
     }
 };
 
