@@ -21,9 +21,9 @@ bool SliderDouble2(const char* label, double v[2], double v_min, double v_max, c
 }
 }
 
-struct ImPlotFilter : public App {
+struct ImFilter : public App {
 
-    ImPlotFilter() : App(960,540,"ImPlot Filter") { }    
+    ImFilter() : App(960,540,"ImFilter") { }    
 
     void update() override {
    
@@ -68,7 +68,7 @@ struct ImPlotFilter : public App {
         static bool filt_need_upate    = true;
 
         ImGui::SetNextWindowPos(ImVec2(0,0), ImGuiCond_Always);
-        ImGui::SetNextWindowSize(ImVec2(960,540), ImGuiCond_Always);
+        ImGui::SetNextWindowSize(get_window_size(), ImGuiCond_Always);
         ImGui::Begin("Filter",nullptr, ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoTitleBar);
         ImGui::BeginChild("ChildL", ImVec2(ImGui::GetWindowContentRegionWidth() * 0.5f, -1));
         ImGui::Text("Input:    x(t) = A1*sin(2*pi*F1*t) + A2*sin(2*pi*F1*t) + noise");
@@ -240,7 +240,7 @@ struct ImPlotFilter : public App {
 };
 
 int main(int argc, char const *argv[]) {
-    ImPlotFilter filt;
-    filt.run();
+    ImFilter app;
+    app.run();
     return 0;
 }

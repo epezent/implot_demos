@@ -43,7 +43,7 @@ void audio_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_ui
 }
 
 // Spectrogram App
-struct ImPlotSpectrogram : App {
+struct ImSpectrogram : App {
 
     static constexpr int WIN_W = 640;            // window width
     static constexpr int WIN_H = 480;            // window height
@@ -72,8 +72,8 @@ struct ImPlotSpectrogram : App {
     double m_max_db =  40;                        // maximum spectrogram dB
 
     // Consutrctor
-    ImPlotSpectrogram(const std::string& filepath) :
-        App(WIN_W,WIN_H,"ImPlot Spectrogram"),
+    ImSpectrogram(const std::string& filepath) :
+        App(WIN_W,WIN_H,"ImSpectrogram"),
         m_spectrogram(N_FRQ*N_BIN,0)
     {
         // allocate FFT memory
@@ -114,7 +114,7 @@ struct ImPlotSpectrogram : App {
     }
 
     // Destructor
-    ~ImPlotSpectrogram() {
+    ~ImSpectrogram() {
         free(m_fft);
         ma_device_uninit(&m_device);
         ma_decoder_uninit(&m_decoder);
@@ -182,7 +182,7 @@ struct ImPlotSpectrogram : App {
             idx -= idx % N_FFT;
             kiss_fftr(m_fft, &m_samples[idx], reinterpret_cast<kiss_fft_cpx*>(m_fft_out));
             auto getter1 = [](void* data, int i) {
-                ImPlotSpectrogram& spec = *(ImPlotSpectrogram*)(data);
+                ImSpectrogram& spec = *(ImSpectrogram*)(data);
                 double db = 20*log10(std::abs(spec.m_fft_out[i]));
                 double x = remap01((double)i,0.0,(double)(N_FRQ-1));
                 double y = remap(db,spec.m_min_db,spec.m_max_db,-1.0,1.0);
@@ -235,7 +235,7 @@ int main(int argc, char const *argv[]) {
         std::cout << "No input file provided!\n";
         return -1;
     }
-    ImPlotSpectrogram spec(argv[1]);
-    spec.run();
+    ImSpectrogram app(argv[1]);
+    app.run();
     return 0;
 }

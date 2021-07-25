@@ -15,9 +15,6 @@ FetchContent_MakeAvailable(glfw)
 FetchContent_Declare(iir GIT_REPOSITORY https://github.com/berndporr/iir1) 
 FetchContent_MakeAvailable(iir)
 
-FetchContent_Declare(curl GIT_REPOSITORY https://github.com/curl/curl) 
-FetchContent_MakeAvailable(curl)
-
 FetchContent_Declare(curl
 URL                    https://github.com/curl/curl/releases/download/curl-7_75_0/curl-7.75.0.tar.xz
 URL_HASH               SHA256=fe0c49d8468249000bda75bcfdf9e30ff7e9a86d35f1a21f428d79c389d55675 # the file hash for curl-7.75.0.tar.xz
@@ -80,14 +77,14 @@ include_directories(../imgui/ ../imgui/examples ../imgui/examples/libs/gl3w ../i
 ###############################################################################
 
 set(IMPLOT_HEADERS ../implot/implot.h ../implot/implot_internal.h)
-set(IMPLOT_SRC     ../implot/implot.cpp ../implot/implot_items.cpp ../implot/implot_demo.cpp) # ../implot/backends/implot_impl_opengl3.cpp) 
+set(IMPLOT_SRC     ../implot/implot.cpp ../implot/implot_items.cpp ../implot/implot_demo.cpp) 
 
 add_library(implot ${IMPLOT_HEADERS} ${IMPLOT_SRC})
 target_link_libraries(implot PUBLIC imgui)
 target_compile_definitions(implot PUBLIC IMPLOT_DEBUG IMPLOT_DLL_EXPORT IMPLOT_BACKEND_ENABLE_OPENGL3 IMGUI_IMPL_OPENGL_LOADER_GL3W)
 set_property(TARGET implot PROPERTY CXX_STANDARD 11)
 if(MSVC)
-  # target_compile_options(implot PRIVATE /W4 /WX /FA /O2 /arch:AVX2 /fp:fast )
+  target_compile_options(implot PRIVATE /W4 /WX /FA /O2 /arch:AVX2 /fp:fast)
 else()
   target_compile_options(implot PRIVATE -Wall -Wextra -pedantic -Werror)
 endif()
@@ -102,6 +99,7 @@ add_library(app
   common/App.h
   common/App.cpp
   common/Shader.h
+  common/Image.h
   common/Fonts/Fonts.h
   common/Fonts/FontAwesome5.cpp
   common/Fonts/RobotoRegular.cpp
@@ -115,14 +113,6 @@ target_include_directories(app PUBLIC common)
 target_link_libraries(app implot)
 
 ###############################################################################
-# TEST APPS
-###############################################################################
-
-add_executable(benchmarks "tests/benchmarks.cpp")
-target_link_libraries(benchmarks app)
-target_compile_options(benchmarks PUBLIC)
-
-###############################################################################
 # DEMO APPS
 ###############################################################################
 
@@ -130,30 +120,31 @@ target_compile_options(benchmarks PUBLIC)
 add_executable(demo "demos/demo.cpp")
 target_link_libraries(demo app)
 
+# maps demo
 add_executable(maps "demos/maps.cpp")
 target_link_libraries(maps app CURL::libcurl)
 target_compile_features(maps PRIVATE cxx_std_17)
 
-# GPU acceleration
-add_executable(gpu "demos/gpu.cpp")
-target_link_libraries(gpu app)
-target_compile_features(gpu PRIVATE cxx_std_17)
+# perlin demo
+add_executable(perlin "demos/perlin.cpp")
+target_link_libraries(perlin app)
+target_include_directories(perlin PRIVATE "3rdparty")
 
-# terrain visualizer with heatmaps
-add_executable(terrain "demos/terrain.cpp")
-target_link_libraries(terrain app)
-target_include_directories(terrain PRIVATE "3rdparty")
-
+# mandel demo
 add_executable(mandel "demos/mandel.cpp")
 target_link_libraries(mandel app)
 target_include_directories(mandel PRIVATE "3rdparty")
-# target_compile_options(mandel PRIVATE /FA /O2 /arch:AVX2 /fp:fast  /Zi /openmp)
+if (MSVC)
+  target_compile_options(mandel PRIVATE /FA /O2 /arch:AVX2 /fp:fast /openmp)
+endif()
 
-# imdesmos demo
-add_executable(imdesmos "demos/imdesmos.cpp")
-target_link_libraries(imdesmos app)
-target_include_directories(imdesmos PRIVATE "3rdparty")
-set_target_properties(imdesmos PROPERTIES COMPILE_FLAGS "/bigobj")
+# graph demo
+add_executable(graph "demos/graph.cpp")
+target_link_libraries(graph app)
+target_include_directories(graph PRIVATE "3rdparty")
+if (MSVC)
+  set_target_properties(graph PROPERTIES COMPILE_FLAGS "/bigobj")
+endif()
 
 # filter demo
 add_executable(filter "demos/filter.cpp" ${KISS_SRC})
@@ -166,3 +157,15 @@ add_executable(spectrogram "demos/spectrogram.cpp" ${KISS_SRC})
 target_link_libraries(spectrogram app)        
 target_compile_features(spectrogram PRIVATE cxx_std_17)
 add_custom_command(TARGET spectrogram POST_BUILD  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/resources/audio/aphex_twin_formula.wav ${CMAKE_CURRENT_BINARY_DIR}/aphex_twin_formula.wav)
+
+###############################################################################
+# TEST APPS
+###############################################################################
+
+add_executable(benchmarks "tests/benchmarks.cpp")
+target_link_libraries(benchmarks app)
+target_compile_options(benchmarks PUBLIC)
+
+add_executable(gpu "tests/gpu.cpp")
+target_link_libraries(gpu app)
+target_compile_features(gpu PRIVATE cxx_std_17)

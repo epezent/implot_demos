@@ -1,6 +1,6 @@
-// Demo:   demo.cpp
+// Demo:   mandel.cpp
 // Author: Evan Pezent (evanpezent.com)
-// Date:   3/26/2021
+// Date:   7/25/2021
 
 #include "App.h"
 #include "ThreadPool.h"
@@ -8,6 +8,7 @@
 #include <imgui_internal.h>
 #include <immintrin.h>
 
+// Mandelbrot algorithms obtained from:
 // https://nullprogram.com/blog/2015/07/10/
 
 struct spec {
@@ -177,7 +178,7 @@ void mandel_avx<double>(unsigned char *image, const struct spec *s)
 
 
 
-struct ImPlotDemo : App {
+struct ImMandel : App {
     
 
     static constexpr int kThreads = 12;
@@ -185,7 +186,7 @@ struct ImPlotDemo : App {
     spec s;
     ThreadPool pool;
     
-    ImPlotDemo() : App(640,480,"ImPlot Mandelbrot",false), pool(kThreads) { }
+    ImMandel() : App(640,480,"ImMandelbrot",false), pool(kThreads) { }
 
     void init() override {
         s.width = 960;
@@ -255,6 +256,12 @@ struct ImPlotDemo : App {
         ImGui::SetNextWindowPos(ImVec2(0,0), ImGuiCond_Always);
         ImGui::SetNextWindowSize(get_window_size(), ImGuiCond_Always);
         ImGui::Begin("##Mandel", nullptr, ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoResize);
+
+        if (ImGui::Button(ICON_FA_HOME))
+            ImPlot::SetNextPlotLimits(-2.5,1.5,-1.5,1.5,ImGuiCond_Always);
+        else
+            ImPlot::SetNextPlotLimits(-2.5,1.5,-1.5,1.5);
+        ImGui::SameLine(); 
         ImGui::Checkbox("AVX",&avx); ImGui::SameLine();
 #ifndef _OPENMP
         static bool mt  = true;
@@ -263,12 +270,7 @@ struct ImPlotDemo : App {
         static bool mt  = false;
 #endif
         ImGui::Checkbox("Double",&dp); ImGui::SameLine();
-        ImGui::Text("    FPS: %.2f", ImGui::GetIO().Framerate); 
-        ImGui::SameLine(); 
-        if (ImGui::Button(ICON_FA_HOME))
-            ImPlot::SetNextPlotLimits(-2.5,1.5,-1.5,1.5,ImGuiCond_Always);
-        else
-            ImPlot::SetNextPlotLimits(-2.5,1.5,-1.5,1.5);
+        ImGui::Text("    FPS: %.2f", ImGui::GetIO().Framerate);
         if (ImPlot::BeginPlot("##Terrain",0,0,ImVec2(-1,-1),0,ImPlotAxisFlags_NoDecorations,ImPlotAxisFlags_NoDecorations)) {
             auto lims = ImPlot::GetPlotLimits();
             s.xlim[0] = lims.X.Min;
@@ -297,7 +299,7 @@ struct ImPlotDemo : App {
 
 int main(int argc, char const *argv[])
 {
-    ImPlotDemo demo;
-    demo.run();
+    ImMandel app;
+    app.run();
     return 0;
 }

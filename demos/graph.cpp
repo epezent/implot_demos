@@ -1,4 +1,4 @@
-// Demo:   imdesmos.cpp (WIP)
+// Demo:   graph.cpp
 // Author: Evan Pezent (evanpezent.com)
 // Date:   6/7/2021
 
@@ -37,12 +37,12 @@ struct Expression {
     double x;
 };
 
-struct ImDesmos : App {
+struct ImGraph : App {
 
     Expression expr;
     ImPlotLimits limits;
 
-    ImDesmos(int w, int h, std::string title) :
+    ImGraph(int w, int h, std::string title) :
         App(w,h,title)
     { 
         expr.set("0.25*sin(2*pi*5*x)+0.5");
@@ -51,10 +51,10 @@ struct ImDesmos : App {
 
     void update() override {
    
-        ImGui::SetNextWindowSize({640,480});
+        ImGui::SetNextWindowSize(get_window_size());
         ImGui::SetNextWindowPos({0,0});
 
-        ImGui::Begin("ImDesmos",nullptr,ImGuiWindowFlags_NoCollapse|ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoResize);
+        ImGui::Begin("ImGraph",nullptr,ImGuiWindowFlags_NoCollapse|ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoResize);
         bool valid = expr.valid;
         if (!valid)
             ImGui::PushStyleColor(ImGuiCol_FrameBg, {1,0,0,1});
@@ -71,7 +71,7 @@ struct ImDesmos : App {
                 ImPlot::SetNextLineStyle(expr.color);
                 ImPlot::PlotLineG("##item",
                     [](void* data, int idx) {
-                    auto& self = *(ImDesmos*)data;
+                    auto& self = *(ImGraph*)data;
                     double x = remap((double)idx, 0.0, 9999.0, self.limits.X.Min, self.limits.X.Max);
                     double y = self.expr.eval(x);
                     return ImPlotPoint(x,y);
@@ -87,7 +87,7 @@ struct ImDesmos : App {
 
 int main(int argc, char const *argv[])
 {
-    ImDesmos desmos(640,480,"ImDesmos Graphing Calculator");
-    desmos.run();
+    ImGraph app(640,480,"ImGraph");
+    app.run();
     return 0;
 }

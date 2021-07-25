@@ -41,7 +41,10 @@ cmake --build . --config Release
 |---|---|
 |`demo.cpp`|Main demo. Displays the ImPlot (and ImGui) library supplied demo windows.|
 |`filter.cpp`|Simple filter toy for educational purposes. Displays time domain input/output signals, and the frequency domain transfer function, amplitude spectrum, etc.|
-|`spectrogram.cpp`|Realtime audio spectrogram and visualizer with device playback. Pass in an audio file at the command line: `./spectrogram.exe ./aphex_twin_formula.wav` (see `resources/audio` folder).|
+|`spectrogram.cpp`|Realtime audio spectrogram and visualizer with device playback. Pass in an audio file at the command line: `./spectrogram.exe ./aphex_twin_formula.wav` (see `resources/audio` folder). *Recommend compiling with ImPlot `backends` branch.*|
+|`maps.cpp`|OpenStreetMap world map viewer. Downloads and displays zoomable tile maps in a plot.|
+|`mandel.cpp`|Realtime Mandelbrot viewer using AVX2 and OpenMP acceleration. *Recommend compiling with ImPlot `backends` branch.*|
+|`perlin.cpp`|Renders perlin noise in a heatmap.|
 
 ## Contributing
 
