@@ -2,10 +2,6 @@
 
 This repository contains toy [ImPlot](https://github.com/epezent/implot) applications that demonstrate some of the library's functionality. The demos here are more sophisticated than those provided in `implot_demo.h`, and may rely on third-party libraries that would otherwise clutter ImPlot's main repository. Use these examples as a starting point for your application and to familiarize yourself with ImPlot, but do not assume all code (e.g. signal processing algorithms) to be perfectly correct or optimal.
 
-<img src="https://raw.githubusercontent.com/epezent/implot_demos/master/screenshots/filt.png" height="250"> <img src="https://github.com/epezent/implot_demos/blob/master/screenshots/spec.png" height="250">
-
-
-
 ## Requirements
 
 - OpenGL
@@ -37,14 +33,14 @@ cmake --build . --config Release
 
 ## Demos
 
-|Demo|Description|
-|---|---|
-|`demo.cpp`|Main demo. Displays the ImPlot (and ImGui) library supplied demo windows.|
-|`filter.cpp`|Simple filter toy for educational purposes. Displays time domain input/output signals, and the frequency domain transfer function, amplitude spectrum, etc.|
-|`spectrogram.cpp`|Realtime audio spectrogram and visualizer with device playback. Pass in an audio file at the command line: `./spectrogram.exe ./aphex_twin_formula.wav` (see `resources/audio` folder). *Recommend compiling with ImPlot `backends` branch.*|
-|`maps.cpp`|OpenStreetMap world map viewer. Downloads and displays zoomable tile maps in a plot.|
-|`mandel.cpp`|Realtime Mandelbrot viewer using AVX2 and OpenMP acceleration. *Recommend compiling with ImPlot `backends` branch.*|
-|`perlin.cpp`|Renders perlin noise in a heatmap.|
+|Demo|Description|Image|
+|---|---|---|
+|`demo.cpp`|Main demo. Displays the ImPlot (and ImGui) library supplied demo windows.| |
+|`filter.cpp`|Simple filter toy for educational purposes. Displays time domain input/output signals, and the frequency domain transfer function, amplitude spectrum, etc.|![filter](https://raw.githubusercontent.com/epezent/implot_demos/master/screenshots/filter.png)|
+|`spectrogram.cpp`|Realtime audio spectrogram and visualizer with device playback. Pass in an audio file at the command line: `./spectrogram.exe ./aphex_twin_formula.wav` (see `resources/audio` folder). *Recommend compiling with ImPlot `backends` branch.*|![spectrogram](https://github.com/epezent/implot_demos/blob/master/screenshots/spectrogram.png)|
+|`maps.cpp`|OpenStreetMap world map viewer. Downloads and displays zoomable tile maps in a plot.|![maps](https://github.com/epezent/implot_demos/blob/master/screenshots/maps.png)|
+|`mandel.cpp`|Realtime Mandelbrot viewer using AVX2 and OpenMP acceleration. *Recommend compiling with ImPlot `backends` branch.*|![mandel](https://github.com/epezent/implot_demos/blob/master/screenshots/mandel.png)|
+|`perlin.cpp`|Renders perlin noise in a heatmap.|![perlin](https://github.com/epezent/implot_demos/blob/master/screenshots/perlin.png)|
 
 ## Contributing
 
