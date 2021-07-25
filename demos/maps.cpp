@@ -63,13 +63,16 @@ bool operator<(const TileCoord& l, const TileCoord& r ) {
 
 enum TileState : int {
     Unavailable = 0,
-    Available,
-    Downloading
+    Loaded,
+    Downloading,
+    OnDisk
 };
 
 typedef Image TileImage;
 
 struct Tile {
+    Tile() : state(TileState::Unavailable) {  }
+    Tile(TileState s) : state(s) { }
     TileState state;
     TileImage image;
 };
@@ -84,15 +87,124 @@ size_t curl_write_cb(void *ptr, size_t size, size_t nmemb, void *userdata) {
     return written;
 }
 
-class TileDownloader {
+class TileManager {
 public:
-    
-    inline TileDownloader(size_t threads) : m_stop(false)
+
+    TileManager()  : m_stop(false)
     {
-        for(size_t i = 0;i<threads;++i) {
+        start_workers();
+    }
+ 
+    inline ~TileManager() {
+        {
+            std::unique_lock<std::mutex> lock(m_queue_mutex);
+            m_stop = true;
+        }
+        m_condition.notify_all();
+        for(std::thread &worker: m_workers)
+            worker.join();
+    }
+
+    const std::vector<std::pair<TileCoord, std::shared_ptr<Tile>>>& get_region(ImPlotLimits view, ImVec2 pixels) {
+        double min_x = std::clamp(view.X.Min, 0.0, 1.0);
+        double min_y = std::clamp(view.Y.Min, 0.0, 1.0);
+        double size_x = std::clamp(view.X.Size(),0.0,1.0);
+        double size_y = std::clamp(view.Y.Size(),0.0,1.0);
+
+        double pix_occupied_x = (pixels.x / view.X.Size()) * size_x;
+        double pix_occupied_y = (pixels.y / view.Y.Size()) * size_y;
+        double units_per_tile_x = view.X.Size() * (TILE_SIZE / pix_occupied_x);
+        double units_per_tile_y = view.Y.Size() * (TILE_SIZE / pix_occupied_y);
+
+        int z    = 0;
+        double r = 1.0 / pow(2,z);
+        while (r > units_per_tile_x && r > units_per_tile_y && z < MAX_ZOOM) 
+            r = 1.0 / pow(2,++z);
+        
+        m_region.clear();
+        if (!add_region(z, min_x, min_y, size_x, size_y) && z > 0) {
+            add_region(--z, min_x, min_y, size_x, size_y); 
+            std::reverse(m_region.begin(),m_region.end());
+        } 
+        return m_region;
+    }    
+
+    std::shared_ptr<Tile> try_get_tile(TileCoord coord) {
+        std::lock_guard<std::mutex> lock(m_tiles_mutex);
+        if (m_tiles.count(coord)) 
+            return get_tile(coord);   
+        else if (fs::exists(coord.path())) 
+            return load_tile(coord);  
+        else 
+            download_tile(coord);        
+        return nullptr;        
+    }
+
+    int load_count() const     { return m_loads;     }
+    int download_count() const { return m_downloads; }
+
+private:
+
+    bool add_region(int z, double min_x, double min_y, double size_x, double size_y) {
+        int k = pow(2,z);
+        double r = 1.0 / k;
+        int xa = min_x * k; 
+        int xb = xa + ceil(size_x / r) + 1; 
+        int ya = min_y * k;
+        int yb = ya + ceil(size_y / r) + 1;        
+        xb = std::clamp(xb,0,k);
+        yb = std::clamp(yb,0,k);
+        bool covered = true;
+        for (int x = xa; x < xb; ++x) {                
+            for (int y = ya; y < yb; ++y) {
+                TileCoord coord{z,x,y};
+                std::shared_ptr<Tile> tile = try_get_tile(coord);
+                m_region.push_back({coord,tile});
+                if (tile == nullptr || tile->state != TileState::Loaded)    
+                    covered = false;
+            }
+        }
+        return covered;
+    }
+
+    void download_tile(TileCoord coord) {        
+        m_tiles[coord] = std::make_shared<Tile>(Downloading);
+        {
+            std::unique_lock<std::mutex> lock(m_queue_mutex);
+            m_queue.emplace(coord);
+        }
+        m_condition.notify_one();
+    }
+
+    std::shared_ptr<Tile> get_tile(TileCoord coord) {
+        if (m_tiles[coord]->state == Loaded)
+            return m_tiles[coord];
+        else if (m_tiles[coord]->state == OnDisk)
+            return load_tile(coord);
+        return nullptr; 
+    }
+
+    std::shared_ptr<Tile> load_tile(TileCoord coord) {
+        if (!m_tiles.count(coord))
+            m_tiles[coord] = std::make_shared<Tile>();
+        if (m_tiles[coord]->image.LoadFromFile(coord.path().c_str())) {
+            m_tiles[coord]->state = TileState::Loaded;
+            m_loads++;
+            return m_tiles[coord];  
+        }
+        printf("TileManager[m]: Failed to load tile %s. Attempting redownload.\n", coord.label());
+        if (!fs::remove(coord.path()))
+            printf("TileManager[m]: Failed to remove %s\n", coord.path().c_str());
+        printf("TileManager[m]: Removed %s\n",coord.path().c_str());
+        m_tiles.erase(coord);
+        return nullptr;
+    }
+
+    void start_workers() {
+        for(size_t i = 0; i < MAX_THREADS; ++i) {
             m_workers.emplace_back(
                 [this, i] {
-                    printf("TileDownloader[%d]: Thread started\n",i);
+                    printf("TileManager[%d]: Thread started\n",i);
                     CURL* curl = curl_easy_init();
                     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_cb);
                     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1);
@@ -101,12 +213,12 @@ public:
                     {
                         TileCoord coord;
                         {
-                            std::unique_lock<std::mutex> lock(this->m_mutex);
+                            std::unique_lock<std::mutex> lock(this->m_queue_mutex);
                             this->m_condition.wait(lock,
                                 [this]{ return this->m_stop || !this->m_queue.empty(); });
                             if(this->m_stop && this->m_queue.empty()) {
                                 curl_easy_cleanup(curl);
-                                printf("TileDownloader[%d]: Thread terminated\n",i);
+                                printf("TileManager[%d]: Thread terminated\n",i);
                                 return;
                             }
                             coord = std::move(this->m_queue.front());
@@ -115,136 +227,41 @@ public:
                         fs::create_directories(coord.dir());
                         FILE *fp = fopen(coord.path().c_str(), "wb");
                         if (!fp) 
-                            printf("TileDownloader[%d]: Failed to create file on the disk!\n",i);                        
+                            printf("TileManager[%d]: Failed to create file on the disk!\n",i);                        
                         curl_easy_setopt(curl, CURLOPT_URL, coord.url().c_str());
                         curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
                         CURLcode rc = curl_easy_perform(curl);
                         if (rc) 
-                            printf("TileDownloader[%d]: Failed to download: %s\n", i, coord.url().c_str());                        
+                            printf("TileManager[%d]: Failed to download: %s\n", i, coord.url().c_str());                        
                         long res_code = 0;
                         curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &res_code);
                         if (!((res_code == 200 || res_code == 201) && rc != CURLE_ABORTED_BY_CALLBACK))  
-                            printf("TileDownloader[%d]: Response code: %d\n",i,res_code);                        
+                            printf("TileManager[%d]: Response code: %d\n",i,res_code);                        
                         fclose(fp);
-                        this->downloads++;
+                        this->m_downloads++;
+                        {
+                            std::lock_guard<std::mutex> lock(m_tiles_mutex);
+                            m_tiles[coord]->state = OnDisk;
+                        }
                     }
                 }
             );
         }
     }
 
-    inline ~TileDownloader() {
-        {
-            std::unique_lock<std::mutex> lock(m_mutex);
-            m_stop = true;
-        }
-        m_condition.notify_all();
-        for(std::thread &worker: m_workers)
-            worker.join();
-    }
+    std::atomic<int> m_loads     = 0;
+    std::atomic<int> m_downloads = 0;
 
-    void submit(TileCoord coord) {
-        {
-            std::unique_lock<std::mutex> lock(m_mutex);
-            m_queue.emplace(coord);
-        }
-        m_condition.notify_one();
-    }
-
-    std::atomic<int> downloads = 0;
-
-private:
-    std::vector<std::thread> m_workers;
-    std::queue<TileCoord> m_queue;
-    std::mutex m_mutex;
-    std::condition_variable m_condition;
-    bool m_stop;
-};
-
-
-class TileManager {
-public:
-
-    TileManager() : m_downloader(MAX_THREADS) { }  
-
-    std::shared_ptr<Tile> get_tile(TileCoord coord) {
-        if (m_tiles.count(coord)) {
-            if (m_tiles[coord]->state == TileState::Available)
-                return m_tiles[coord];    
-            if (m_tiles[coord]->state == TileState::Downloading && fs::exists(coord.path()))    
-                return load_tile(coord);  
-            else
-                return nullptr;             
-        }
-        else if (fs::exists(coord.path())) {
-            m_tiles[coord] = std::make_shared<Tile>();
-            return load_tile(coord);
-        }   
-        else {
-            m_tiles[coord] = std::make_shared<Tile>();
-            m_tiles[coord]->state = TileState::Downloading;
-            m_downloader.submit(coord);
-            return nullptr;
-        }
-    }
-
-    const std::vector<std::pair<TileCoord, std::shared_ptr<Tile>>>& get_region(ImPlotLimits limits, ImVec2 size) {
-        double range_x = std::clamp(limits.X.Size(),0.0,1.0);
-        double range_y = std::clamp(limits.Y.Size(),0.0,1.0);
-        double pix_occupied_x = (size.x / limits.X.Size()) * range_x;
-        double pix_occupied_y = (size.y / limits.Y.Size()) * range_y;
-        double units_per_tile_x = limits.X.Size() / (pix_occupied_x / TILE_SIZE);
-        double units_per_tile_y = limits.Y.Size() / (pix_occupied_y / TILE_SIZE);
-
-        int z    = 0;
-        int k    = pow(2,z);
-        double r = 1.0 / k;
-        while (r > units_per_tile_x && r > units_per_tile_y && z < MAX_ZOOM) {
-            k = pow(2,++z);
-            r = 1.0 / k;
-        }
-
-        double xmin = std::clamp(limits.X.Min, 0.0, 1.0);
-        double ymin = std::clamp(limits.Y.Min, 0.0, 1.0);
-
-        int xa = xmin * k; 
-        int xb = xa + ceil(range_x / r) + 1; 
-        int ya = ymin * k;
-        int yb = ya + ceil(range_y / r) + 1;  
-        
-        xb = std::clamp(xb,0,k);
-        yb = std::clamp(yb,0,k);
-
-        m_region.clear();
-        for (int x = xa; x < xb; ++x) {                
-            for (int y = ya; y < yb; ++y) {
-                TileCoord coord{z,x,y};
-                std::shared_ptr<Tile> tile = get_tile(coord);
-                m_region.push_back({coord,tile});
-            }
-        }
-        return m_region;
-    }
-    
-
-    int load_count() const { return m_loads; }
-    int download_count() const { return m_downloader.downloads; }
-
-private:
-
-    std::shared_ptr<Tile> load_tile(TileCoord tile) {
-        if (m_tiles[tile]->image.LoadFromFile(tile.path().c_str())) {
-            m_tiles[tile]->state = TileState::Available;
-            m_loads++;
-            return m_tiles[tile];  
-        }
-        return nullptr;
-    }
-
-    int m_loads = 0;
     std::map<TileCoord,std::shared_ptr<Tile>> m_tiles;
     std::vector<std::pair<TileCoord, std::shared_ptr<Tile>>> m_region;
-    TileDownloader m_downloader;
+
+    std::vector<std::thread> m_workers;
+    std::queue<TileCoord> m_queue;
+    std::mutex m_queue_mutex;
+    std::mutex m_tiles_mutex;
+    std::condition_variable m_condition;
+    bool m_stop;
+
 };
 
 struct ImMaps : public App {
@@ -253,6 +270,8 @@ struct ImMaps : public App {
     void update() override {
         static int renders = 0;
         static bool debug = false;
+        if (ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_A)))
+            debug = !debug;
 
         ImGui::SetNextWindowPos({0,0});
         ImGui::SetNextWindowSize(get_window_size());
@@ -304,5 +323,5 @@ struct ImMaps : public App {
 int main(int argc, char **argv)
 {
     ImMaps maps(960,540,"ImMaps");
-    maps.run();
+    maps.run();    
 }

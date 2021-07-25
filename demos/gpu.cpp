@@ -242,8 +242,8 @@ struct BenchDataGpu
 
 bool GetBranchName(const std::string& git_repo_path, std::string& branch_name)
 {
-    IM_ASSERT(git_repo_path != NULL);
-    IM_ASSERT(branch_name != NULL);
+    // IM_ASSERT(git_repo_path != NULL);
+    // IM_ASSERT(branch_name != NULL);
     std::string head_path = git_repo_path + "/.git/HEAD";
     size_t head_size = 0;
     bool result = false;
