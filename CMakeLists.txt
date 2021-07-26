@@ -67,6 +67,9 @@ set(IMGUI_SRC
 find_package(OpenGL REQUIRED)
 
 add_library(imgui ${IMGUI_HEADERS} ${IMGUI_SRC})
+if(MSVC)
+  target_compile_options(imgui PRIVATE /W4 /WX /FA /O2 /arch:AVX2 /fp:fast)
+endif()
 target_link_libraries(imgui PUBLIC glfw OpenGL::GL)
 target_compile_definitions(imgui PRIVATE IMGUI_DLL_EXPORT)
 
@@ -162,10 +165,9 @@ add_custom_command(TARGET spectrogram POST_BUILD  COMMAND ${CMAKE_COMMAND} -E co
 # TEST APPS
 ###############################################################################
 
-add_executable(benchmarks "tests/benchmarks.cpp")
-target_link_libraries(benchmarks app)
-target_compile_options(benchmarks PUBLIC)
-
-add_executable(gpu "tests/gpu.cpp")
-target_link_libraries(gpu app)
-target_compile_features(gpu PRIVATE cxx_std_17)
+add_executable(optimizations "tests/optimizations.cpp")
+target_link_libraries(optimizations app)
+target_compile_features(optimizations PRIVATE cxx_std_17)
+if (MSVC)
+  target_compile_options(optimizations PRIVATE /FA /O2 /arch:AVX2 /fp:fast /openmp)
+endif()
