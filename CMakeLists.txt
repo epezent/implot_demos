@@ -9,6 +9,9 @@ project(implot_demos VERSION 0.1.0)
 include(FetchContent) 
 # set(FETCHCONTENT_FULLY_DISCONNECTED ON)
 
+FetchContent_Declare(fmt GIT_REPOSITORY https://github.com/fmtlib/fmt)
+FetchContent_MakeAvailable(fmt)
+
 FetchContent_Declare(glfw GIT_REPOSITORY https://github.com/glfw/glfw) 
 FetchContent_MakeAvailable(glfw)
 
@@ -27,11 +30,14 @@ target_include_directories(curl_int INTERFACE ${curl_SOURCE_DIR}/include ${curl_
 add_library(CURL::libcurl ALIAS curl_int)
 
 # LOCAL LIBS
+
+# KISS FFT
 set(KISS_SRC "3rdparty/kissfft/kiss_fft.h" 
              "3rdparty/kissfft/kiss_fftr.h" 
              "3rdparty/kissfft/kiss_fft.c" 
              "3rdparty/kissfft/kiss_fftr.c")
 
+# EVERYTHING ELSE
 include_directories("3rdparty" "3rdparty/kissfft")
 
 ###############################################################################
@@ -87,7 +93,7 @@ target_link_libraries(implot PUBLIC imgui)
 target_compile_definitions(implot PUBLIC IMPLOT_DEBUG IMPLOT_DLL_EXPORT IMPLOT_BACKEND_ENABLE_OPENGL3 IMGUI_IMPL_OPENGL_LOADER_GL3W)
 set_property(TARGET implot PROPERTY CXX_STANDARD 11)
 if(MSVC)
-  target_compile_options(implot PRIVATE /W4 /WX /FA /O2 /arch:AVX2 /fp:fast)
+  target_compile_options(implot PRIVATE /W4 /WX /FA /O2 /arch:AVX2 /fp:fast /Zi)
 else()
   target_compile_options(implot PRIVATE -Wall -Wextra -pedantic -Werror)
 endif()
@@ -161,6 +167,11 @@ target_link_libraries(spectrogram app)
 target_compile_features(spectrogram PRIVATE cxx_std_17)
 add_custom_command(TARGET spectrogram POST_BUILD  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/resources/audio/aphex_twin_formula.wav ${CMAKE_CURRENT_BINARY_DIR}/aphex_twin_formula.wav)
 
+# stocks demo
+add_executable(stocks "demos/stocks.cpp" )
+target_link_libraries(stocks app fmt::fmt CURL::libcurl)
+target_compile_features(stocks PRIVATE cxx_std_17)
+
 ###############################################################################
 # TEST APPS
 ###############################################################################
@@ -169,5 +180,5 @@ add_executable(optimizations "tests/optimizations.cpp")
 target_link_libraries(optimizations app)
 target_compile_features(optimizations PRIVATE cxx_std_17)
 if (MSVC)
-  target_compile_options(optimizations PRIVATE /FA /O2 /arch:AVX2 /fp:fast /openmp)
+  target_compile_options(optimizations PRIVATE /FA /O2 /arch:AVX2 /fp:fast /openmp /Zi)
 endif()
