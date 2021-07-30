@@ -923,9 +923,9 @@ struct ImPlotBench : App
                 if (records[run].items.size() > 1)
                 {
                     sprintf(buffer, "%d-%s-%s",  run + 1, records[run].branch.c_str(), names[records[run].mode]);
-                    // ImPlot::SetNextMarkerStyle(ImPlotMarker_Square);
+                    ImPlot::SetNextMarkerStyle(ImPlotMarker_Square,3);
                     ImPlot::PlotLine(buffer, records[run].items.data(), records[run].loop.data(), records[run].items.size());
-                    // ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
+                    ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle,3,ImVec4(0,0,0,0));
                     ImPlot::PlotLine(buffer, records[run].items.data(), records[run].call.data(), records[run].items.size());
                 }
             }
