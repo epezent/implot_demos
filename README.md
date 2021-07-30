@@ -44,7 +44,7 @@ cmake --build . --config Release
 |`mandel.cpp`|Realtime Mandelbrot viewer using AVX2 and OpenMP acceleration. *Recommend compiling with ImPlot `backends` branch.*|![mandel](https://github.com/epezent/implot_demos/blob/master/screenshots/mandel.png)|
 |`perlin.cpp`|Renders perlin noise in a heatmap.|![perlin](https://github.com/epezent/implot_demos/blob/master/screenshots/perlin.png)|
 |`graph.cpp`|Simple graphing calculator using `exprtk` expression evaluator.|![perlin](https://github.com/epezent/implot_demos/blob/master/screenshots/graph.png)|
-|`stocks.cpp`|Downloads and displays historical stock data from Yahoo Finance.|![perlin](https://github.com/epezent/implot_demos/blob/master/screenshots/graph.png)|
+|`stocks.cpp`|Downloads and displays historical stock data from Yahoo Finance.|![perlin](https://github.com/epezent/implot_demos/blob/master/screenshots/stocks.png)|
 
 ## Contributing
 
