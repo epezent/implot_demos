@@ -5,16 +5,19 @@
 #define IMGUI_DEFINE_MATH_OPERATORS
 #define APP_USE_DGPU
 
+// #include <filesystem>
 #include "App.h"
 #include "Shader.h"
 #include <implot_internal.h>
 #include <vector>
 #include <json.hpp>
 #include <iomanip>
-#include <filesystem>
 #include <immintrin.h>
+#include <imgui_stdlib.h>
+#include <string>
+#include <chrono>
 
-namespace fs = std::filesystem;
+// namespace fs = std::filesystem;
 
 #define RESTART_IDX 4294967295
 
@@ -277,7 +280,7 @@ void PlotLineInline(const char *label_id, const ImVec2 *values, int count)
     }
 }
 
-void PlotLineEmpty(const char *label_id, const ImVec2 *values, int count)
+void PlotLineNoTess(const char *label_id, const ImVec2 *values, int count)
 {
     ImPlotContext &gp = *GImPlot;
     if (BeginItem(label_id, ImPlotCol_Line))
@@ -335,6 +338,37 @@ void PlotLineEmpty(const char *label_id, const ImVec2 *values, int count)
     }
 }
 
+void PlotLineNoWrite(const char *label_id, const ImVec2 *values, int count)
+{
+    ImPlotContext &gp = *GImPlot;
+    if (BeginItem(label_id, ImPlotCol_Line))
+    {
+        if (FitThisFrame())
+        {
+            for (int i = 0; i < count; ++i)
+                FitPoint(ImPlotPoint(values[i].x, values[i].y));
+        }
+        const ImPlotNextItemData &s = GetItemData();
+        ImDrawList &DrawList = *GetPlotDrawList();
+        if (count > 1 && s.RenderLine)
+        {
+            unsigned int prims = count - 1;                        
+            DrawList.PrimReserve(prims * 6, prims * 4);  
+            for (unsigned int idx = 0; idx < prims; ++idx)
+            {
+                DrawList._VtxWritePtr += 4;
+                DrawList._IdxWritePtr += 6;
+                DrawList._VtxCurrentIdx += 4;                    
+            }           
+        }
+        EndItem();
+    }
+}
+
+union float8 {
+    __m256 v;
+    float a[8];
+};
 
 void PlotLineAVX2(const char *label_id, const ImVec2 *V, int count) {
     ImPlotContext &gp = *GImPlot;
@@ -410,39 +444,36 @@ void PlotLineAVX2(const char *label_id, const ImVec2 *V, int count) {
                 __m256 Dx  = _mm256_mul_ps(Vx,W);
                 __m256 Dy  = _mm256_mul_ps(Vy,W);
 
-                __m256 P1y_p_Dx = _mm256_add_ps(P1y,Dx);
-                __m256 P1y_m_Dx = _mm256_sub_ps(P1y,Dx);
-
-                __m256 P2y_p_Dx = _mm256_add_ps(P2y,Dx);
-                __m256 P2y_m_Dx = _mm256_sub_ps(P2y,Dx);
-
-                __m256 P2x_p_Dy = _mm256_add_ps(P2x,Dy);
-                __m256 P2x_m_Dy = _mm256_sub_ps(P2x,Dy);
-
-                __m256 P1x_p_Dy = _mm256_add_ps(P1x,Dy);
-                __m256 P1x_m_Dy = _mm256_sub_ps(P1x,Dy);
+                float8 P1y_p_Dx = { _mm256_add_ps(P1y,Dx) };
+                float8 P1y_m_Dx = { _mm256_sub_ps(P1y,Dx) };
+                float8 P2y_p_Dx = { _mm256_add_ps(P2y,Dx) };
+                float8 P2y_m_Dx = { _mm256_sub_ps(P2y,Dx) };
+                float8 P2x_p_Dy = { _mm256_add_ps(P2x,Dy) };
+                float8 P2x_m_Dy = { _mm256_sub_ps(P2x,Dy) };
+                float8 P1x_p_Dy = { _mm256_add_ps(P1x,Dy) };
+                float8 P1x_m_Dy = { _mm256_sub_ps(P1x,Dy) };
 
 
                  for (int j = 0; j < 8; ++j) { 
 
                     auto vtx_p = vtx_pp + (i+j)*4;
                     auto idx_p = idx_pp + (i+j)*6;
-                    auto idx_c = idx_cc + (i+j)*4;                    
+                    auto idx_c = idx_cc + (i+j)*4;  
 
-                    vtx_p[0].pos.x = P1x_p_Dy.m256_f32[j];
-                    vtx_p[0].pos.y = P1y_m_Dx.m256_f32[j];
+                    vtx_p[0].pos.x = P1x_p_Dy.a[j];
+                    vtx_p[0].pos.y = P1y_m_Dx.a[j];
                     vtx_p[0].uv    = uv;
                     vtx_p[0].col   = col;
-                    vtx_p[1].pos.x = P2x_p_Dy.m256_f32[j];
-                    vtx_p[1].pos.y = P2y_m_Dx.m256_f32[j];
+                    vtx_p[1].pos.x = P2x_p_Dy.a[j];
+                    vtx_p[1].pos.y = P2y_m_Dx.a[j];
                     vtx_p[1].uv    = uv;
                     vtx_p[1].col   = col;
-                    vtx_p[2].pos.x = P2x_m_Dy.m256_f32[j];
-                    vtx_p[2].pos.y = P2y_p_Dx.m256_f32[j];
+                    vtx_p[2].pos.x = P2x_m_Dy.a[j];
+                    vtx_p[2].pos.y = P2y_p_Dx.a[j];
                     vtx_p[2].uv    = uv;
                     vtx_p[2].col   = col;
-                    vtx_p[3].pos.x = P1x_m_Dy.m256_f32[j];
-                    vtx_p[3].pos.y = P1y_p_Dx.m256_f32[j];
+                    vtx_p[3].pos.x = P1x_m_Dy.a[j];
+                    vtx_p[3].pos.y = P1y_p_Dx.a[j];
                     vtx_p[3].uv    = uv;
                     vtx_p[3].col   = col;
 
@@ -701,15 +732,18 @@ enum BenchMode {
     BenchMode_LineG,
     BenchMode_LineInline,
     BenchMode_LineImGui,
-    BenchMode_LineEmpty,
+    BenchMode_LineNoTess,
+    BenchMode_LineNoWrite,
     BenchMode_LineGPU,
     BenchMode_LineAVX2,
     BenchMode_COUNT
 };
 
+static const char* BenchMode_Names[] = {"Line","LineG","LineInline","LineImGui","LineNoTess","LineNoWrite","LineGPU","LineAVX2"};
+
 struct BenchRecord
 {
-    std::string branch;
+    std::string name;
     int mode;
     std::vector<float> items;
     std::vector<float> fps;
@@ -720,11 +754,11 @@ struct BenchRecord
 using json = nlohmann::json;
 
 void to_json(json& j, const BenchRecord& p) {
-    j = json{{"branch", p.branch}, {"mode", p.mode}, {"items",p.items},{"fps",p.fps},{"call",p.call},{"loop",p.loop}};
+    j = json{{"name", p.name}, {"mode", p.mode}, {"items",p.items},{"fps",p.fps},{"call",p.call},{"loop",p.loop}};
 }
 
 void from_json(const json& j, BenchRecord& p) {
-    j.at("branch").get_to(p.branch);
+    j.at("name").get_to(p.name);
     j.at("mode").get_to(p.mode);
     j.at("items").get_to(p.items);
     j.at("fps").get_to(p.fps);
@@ -794,12 +828,14 @@ struct ImPlotBench : App
 
     void init() override
     {
-        if (fs::exists("bench.json")) {
+        // if (fs::exists("bench.json")) {
             std::ifstream file("bench.json");
-            json j;
-            file >> j;
-            j.at("records").get_to(records);
-        }
+                if (file.is_open()) {
+                json j;
+                file >> j;
+                j.at("records").get_to(records);
+            }
+        // }
 
         GetBranchName("C:/git/implot",branch);
         glEnable(GL_MULTISAMPLE);
@@ -811,8 +847,18 @@ struct ImPlotBench : App
         ImGui::SetNextWindowSize(get_window_size(), ImGuiCond_Always);
         ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always);
         ImGui::Begin("ImPlot Benchmark Tool",0,ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoTitleBar);
-        ShowBenchmarkTool();
-        // ShowBenchmarkPlotOnly(BenchMode_LineAVX2);
+        if (ImGui::BeginTabBar("Tabs")) {
+            if (ImGui::BeginTabItem("Bench")) {
+                ShowBenchmarkTool();
+                ImGui::EndTabItem();
+            }
+            if (ImGui::BeginTabItem("Results")) {
+                ShowResultsTool();
+                ImGui::EndTabItem();
+            }
+
+            ImGui::EndTabBar();
+        }
         ImGui::End();
     }
 
@@ -830,6 +876,8 @@ struct ImPlotBench : App
         }
     }
 
+
+
     void ShowBenchmarkTool()
     {
         static bool running = false;
@@ -837,9 +885,20 @@ struct ImPlotBench : App
         static int L = 0;
         static int F = 0;
         static double t1, t2;
-        static int mode     = BenchMode_Line;
+        static int mode = BenchMode_Line;
         static size_t call_time = 0;
-        static const char* names[] = {"Line","LineG","LineInline","LineImGui","LineEmpty","LineGPU","LineAVX2"};
+
+        auto get_run_name = [&]() {
+            auto str = branch + "_" + std::string(BenchMode_Names[mode]);
+            if (mode == BenchMode_LineImGui)
+            {
+                str += GImGui->Style.AntiAliasedLines ? "-AA" : "";
+                str += GImGui->Style.AntiAliasedLinesUseTex ? "-Tex" : "";
+            }
+            return str;
+        };
+
+        static std::string run_name = get_run_name();
 
         if (running)
         {
@@ -859,15 +918,15 @@ struct ImPlotBench : App
             if (L > max_items)
             {
                 running = false;
-                L = max_items;
+                L = 0;
             }
         }
 
-        ImGui::Text("ImDrawIdx: %d-bit", (int)(sizeof(ImDrawIdx) * 8));
-        ImGui::Text("ImGuiBackendFlags_RendererHasVtxOffset: %s", (ImGui::GetIO().BackendFlags & ImGuiBackendFlags_RendererHasVtxOffset) ? "True" : "False");
-        ImGui::Text("%.2f FPS", ImGui::GetIO().Framerate);
+        // ImGui::Text("ImDrawIdx: %d-bit", (int)(sizeof(ImDrawIdx) * 8));
+        // ImGui::Text("ImGuiBackendFlags_RendererHasVtxOffset: %s", (ImGui::GetIO().BackendFlags & ImGuiBackendFlags_RendererHasVtxOffset) ? "True" : "False");
+        // ImGui::Text("%.2f FPS", ImGui::GetIO().Framerate);
 
-        ImGui::Separator();
+        // ImGui::Separator();
 
         bool was_running = running;
         if (was_running)
@@ -875,9 +934,7 @@ struct ImPlotBench : App
             ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
             ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.25f);
         }
-        ImGui::Checkbox("AA",&GImGui->Style.AntiAliasedLines);
-        ImGui::SameLine();
-        ImGui::Checkbox("Tex",&GImGui->Style.AntiAliasedLinesUseTex);
+
         if (ImGui::Button("Benchmark"))
         {
             running = true;
@@ -888,48 +945,96 @@ struct ImPlotBench : App
             records.back().call.reserve(max_items + 1);
             records.back().loop.reserve(max_items + 1);
             records.back().mode = mode;
-            records.back().branch = branch;
+            records.back().name = run_name;
             t1 = ImGui::GetTime();
         }
         ImGui::SameLine();
-        if (ImGui::Button("Clear")) {
-            records.clear();
+        ImGui::SameLine();
+        if (ImGui::Button("Warm")) {
+            L = L > 0 ? 0 : max_items;
+            call_time = 0;
         }
         ImGui::SameLine();
-        ImGui::Combo("##Mode",&mode,names,BenchMode_COUNT);
+        ImGui::SetNextItemWidth(100);
+        if (ImGui::Combo("##Mode",&mode,BenchMode_Names,BenchMode_COUNT))
+            run_name = get_run_name();
+        ImGui::SameLine();
+        if (ImGui::Checkbox("AA",&GImGui->Style.AntiAliasedLines)) { run_name = get_run_name(); }
+        ImGui::SameLine();
+        if (ImGui::Checkbox("Tex",&GImGui->Style.AntiAliasedLinesUseTex)) { run_name = get_run_name(); }
+        ImGui::SameLine();
+        ImGui::SetNextItemWidth(-1);
+        ImGui::InputText("##name",&run_name);
         if (was_running)
         {
             ImGui::PopItemFlag();
             ImGui::PopStyleVar();
         }
-
         ImGui::ProgressBar((float)L / (float)(max_items - 1));
 
+
         ImPlot::SetNextPlotLimits(0, 1000, 0, 1, ImGuiCond_Always);
-        if (ImPlot::BeginPlot("##Bench", NULL, NULL, ImVec2(-1, 0), ImPlotFlags_NoChild | ImPlotFlags_CanvasOnly, ImPlotAxisFlags_NoDecorations, ImPlotAxisFlags_NoDecorations))
+        if (ImPlot::BeginPlot("##Bench", NULL, NULL, ImVec2(-1, -1), ImPlotFlags_NoChild | ImPlotFlags_CanvasOnly, ImPlotAxisFlags_NoDecorations, ImPlotAxisFlags_NoDecorations))
         {
-            if (running)
-                PlotBenchmarkItems(mode, L, call_time);
+            PlotBenchmarkItems(mode, L, call_time);
             ImPlot::EndPlot();
         }
 
-        ImPlot::SetNextPlotLimits(0, max_items, 0,20);
+
+    }
+
+    void ShowResultsTool() {
+
+        static bool show_loop_time = true;
+        static bool show_call_time = true;
+        static bool show_fps       = false;
+
+        if (ImGui::Button("Clear"))
+            records.clear();
+        ImGui::SameLine(); ImGui::Checkbox("Frame Time",&show_loop_time);
+        ImGui::SameLine(); ImGui::Checkbox("Call Time",&show_call_time);
+        ImGui::SameLine(); ImGui::Checkbox("FPS",&show_fps);
+
+        ImPlot::SetNextPlotLimits(0, max_items, 0,50);
+        ImPlot::SetNextPlotLimitsY(0,500,2,1);
         // ImPlot::SetNextPlotLimitsY(0,15,2,ImPlotYAxis_2);
-        static char buffer[128];
-        if (ImPlot::BeginPlot("##Stats", "Items (1,000 pts each)", "Time (ms)", ImVec2(-1, -1), ImPlotFlags_NoChild))
+        int flags = ImPlotFlags_NoChild;
+        if (show_fps)
+            flags = flags | ImPlotFlags_YAxis2;
+
+        static std::vector<int> to_delete;
+        to_delete.clear();
+
+        if (ImPlot::BeginPlot("##Stats", "Items (1,000 pts each)", "Time (ms)", ImVec2(-1, -1), flags, 0,0,2,2,"FPS (Hz)"))
         {
             for (int run = 0; run < records.size(); ++run)
             {
                 if (records[run].items.size() > 1)
                 {
-                    sprintf(buffer, "%d-%s-%s",  run + 1, records[run].branch.c_str(), names[records[run].mode]);
-                    ImPlot::SetNextMarkerStyle(ImPlotMarker_Square,3);
-                    ImPlot::PlotLine(buffer, records[run].items.data(), records[run].loop.data(), records[run].items.size());
-                    ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle,3,ImVec4(0,0,0,0));
-                    ImPlot::PlotLine(buffer, records[run].items.data(), records[run].call.data(), records[run].items.size());
+                    ImPlot::SetPlotYAxis(0);
+                    if (show_loop_time) 
+                        ImPlot::PlotLine(records[run].name.c_str(), records[run].items.data(), records[run].loop.data(), records[run].items.size());
+                    if (show_call_time)
+                        ImPlot::PlotLine(records[run].name.c_str(), records[run].items.data(), records[run].call.data(), records[run].items.size());
+                    if (show_fps)
+                    {
+                        ImPlot::SetPlotYAxis(1);
+                        ImPlot::PlotLine(records[run].name.c_str(), records[run].items.data(), records[run].fps.data(), records[run].items.size());
+                    }
+                }
+                if (ImPlot::BeginLegendPopup(records[run].name.c_str())) {
+                    if (ImGui::Button("Delete")) {
+                        to_delete.push_back(run);
+                    }
+                    ImPlot::EndLegendPopup();
                 }
             }
             ImPlot::EndPlot();
+        }
+
+        for (int i = to_delete.size(); i --> 0;) {
+            int idx = to_delete[i];
+            records.erase(records.begin()+idx);
         }
     }
 
@@ -986,14 +1091,26 @@ struct ImPlotBench : App
             }
             GImPlot->Style.AntiAliasedLines = false;
         }
-        else if (mode == BenchMode_LineEmpty)
+        else if (mode == BenchMode_LineNoTess)
         {
             for (int i = 0; i < L; ++i) {
                 ImGui::PushID(i);
                 ImPlot::SetNextLineStyle(items[i].Col);
                 {
                     ScopedProfiler prof(call_time);
-                    ImPlot::PlotLineEmpty("##item", items[i].Data, 1000);
+                    ImPlot::PlotLineNoTess("##item", items[i].Data, 1000);
+                }
+                ImGui::PopID();
+            }
+        }
+        else if (mode == BenchMode_LineNoWrite)
+        {
+            for (int i = 0; i < L; ++i) {
+                ImGui::PushID(i);
+                ImPlot::SetNextLineStyle(items[i].Col);
+                {
+                    ScopedProfiler prof(call_time);
+                    ImPlot::PlotLineNoWrite("##item", items[i].Data, 1000);
                 }
                 ImGui::PopID();
             }
@@ -1025,7 +1142,7 @@ struct ImPlotBench : App
 
 int main(int argc, char const *argv[])
 {
-    ImPlotBench app(750, 900, "ImPlot Benchmark", false);
+    ImPlotBench app(640, 480, "ImPlot Benchmark", false);
     app.run();
     return 0;
 }

@@ -18,6 +18,8 @@ FetchContent_MakeAvailable(glfw)
 FetchContent_Declare(iir GIT_REPOSITORY https://github.com/berndporr/iir1) 
 FetchContent_MakeAvailable(iir)
 
+set(CMAKE_USE_SCHANNEL ON)
+
 FetchContent_Declare(curl
 URL                    https://github.com/curl/curl/releases/download/curl-7_75_0/curl-7.75.0.tar.xz
 URL_HASH               SHA256=fe0c49d8468249000bda75bcfdf9e30ff7e9a86d35f1a21f428d79c389d55675 # the file hash for curl-7.75.0.tar.xz
@@ -76,7 +78,7 @@ add_library(imgui ${IMGUI_HEADERS} ${IMGUI_SRC})
 if(MSVC)
   target_compile_options(imgui PRIVATE /W4 /WX /FA /arch:AVX2 /fp:fast)
 endif()
-target_link_libraries(imgui PUBLIC glfw OpenGL::GL)
+target_link_libraries(imgui PUBLIC glfw OpenGL::GL imm32)
 target_compile_definitions(imgui PRIVATE IMGUI_DLL_EXPORT)
 
 include_directories(../imgui/ ../imgui/examples ../imgui/examples/libs/gl3w ../imgui/backends ../imgui/misc/cpp)
@@ -95,7 +97,7 @@ set_property(TARGET implot PROPERTY CXX_STANDARD 11)
 if(MSVC)
   target_compile_options(implot PRIVATE /W4 /WX /FA /arch:AVX2 /fp:fast /O2) 
 else()
-  target_compile_options(implot PRIVATE -Wall -Wextra -pedantic -Werror)
+  target_compile_options(implot PRIVATE -Wall -Wextra -pedantic -Werror -mavx2 -Ofast)
 endif()
 
 include_directories(../implot/)
@@ -180,5 +182,7 @@ add_executable(optimizations "tests/optimizations.cpp")
 target_link_libraries(optimizations app)
 target_compile_features(optimizations PRIVATE cxx_std_17)
 if (MSVC)
-  target_compile_options(optimizations PRIVATE /FA /arch:AVX2 /fp:fast /openmp /O2)
+  target_compile_options(optimizations PRIVATE /FA /arch:AVX2 /fp:fast /O2)
+else()
+  target_compile_options(optimizations PRIVATE -lstdc++fs -mavx2 -Ofast)
 endif()
