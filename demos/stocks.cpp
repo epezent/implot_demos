@@ -52,9 +52,9 @@ public:
         volume.push_back(v/1000000);
 
         int s = size();
-        int i = max(0,s-20);
-        double mean = ImMean(&close[i],min(s,20));
-        double stdv = s > 1 ? ImStdDev(&close[i],min(s,20)) : 0;
+        int i = std::max(0,s-20);
+        double mean = ImMean(&close[i],std::min(s,20));
+        double stdv = s > 1 ? ImStdDev(&close[i],std::min(s,20)) : 0;
 
         bollinger_top.push_back(mean - 2 * stdv);
         bollinger_mid.push_back(mean);
@@ -252,19 +252,19 @@ struct ImStocks : App
     
     using App::App;
 
-    void init() override {
+    void Start() override {
         m_ticker_data.push_back(m_api.get_ticker("AAPL", "2016-07-01", "2021-07-01", Interval_Daily));
         ImPlot::GetStyle().FitPadding.y = 0.2f;
     }
 
-    void update() override
+    void Update() override
     {
 
         static ImVec4 bull_col(0.5,1,0,1);
         static ImVec4 bear_col(1,0,0.5,1);
 
         ImGui::SetNextWindowPos(ImVec2(0,0), ImGuiCond_Always);
-        ImGui::SetNextWindowSize(get_window_size(), ImGuiCond_Always);
+        ImGui::SetNextWindowSize(GetWindowSize(), ImGuiCond_Always);
         ImGui::Begin("##ImStocks", nullptr, ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoResize/*|ImGuiWindowFlags_MenuBar*/);
         // if (ImGui::BeginMenuBar()) {
         //     if (ImGui::BeginMenu("View")) {
@@ -326,6 +326,6 @@ struct ImStocks : App
 
 int main(int argc, char const *argv[])
 {
-    ImStocks app(960,540,"ImStocks");
-    app.run();
+    ImStocks app("ImStocks",960,540,argc,argv);
+    app.Run();
 }

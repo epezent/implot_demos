@@ -186,9 +186,11 @@ struct ImMandel : App {
     spec s;
     ThreadPool pool;
     
-    ImMandel() : App(640,480,"ImMandelbrot",false), pool(kThreads) { }
+    ImMandel(std::string title, int w, int h, int argc, char const *argv[]) : 
+        App(title,w,h,argc,argv), pool(kThreads) 
+    { }
 
-    void init() override {
+    void Start() override {
         s.width = 960;
         s.height = 960;
         s.depth = 1024;
@@ -248,7 +250,7 @@ struct ImMandel : App {
         for (int i=0; i<kThreads; i++) results[i].wait();
     }
 
-    void update() override {
+    void Update() override {
 
         static bool avx = true;
         static bool dp  = true;
@@ -261,7 +263,7 @@ struct ImMandel : App {
 #endif
 
         ImGui::SetNextWindowPos(ImVec2(0,0), ImGuiCond_Always);
-        ImGui::SetNextWindowSize(get_window_size(), ImGuiCond_Always);
+        ImGui::SetNextWindowSize(GetWindowSize(), ImGuiCond_Always);
         ImGui::Begin("##Mandel", nullptr, ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoResize);
 
 //         if (ImGui::Button(ICON_FA_HOME))
@@ -302,7 +304,7 @@ struct ImMandel : App {
 
 int main(int argc, char const *argv[])
 {
-    ImMandel app;
-    app.run();
+    ImMandel app("ImMandel",640,480,argc,argv);
+    app.Run();
     return 0;
 }

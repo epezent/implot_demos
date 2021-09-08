@@ -71,11 +71,15 @@ struct ImSpectrogram : App {
     double m_min_db = -25;                        // minimum spectrogram dB
     double m_max_db =  40;                        // maximum spectrogram dB
 
-    // Consutrctor
-    ImSpectrogram(const std::string& filepath) :
-        App(WIN_W,WIN_H,"ImSpectrogram"),
+    ImSpectrogram(std::string title, int argc, char const *argv[]) :
+        App(title, WIN_W,WIN_H,argc,argv),
         m_spectrogram(N_FRQ*N_BIN,0)
     {
+        if (argc < 2) {
+            std::cout << "No input file provided!\n";
+            return;
+        }
+        std::string filepath = argv[1];
         // allocate FFT memory
         m_fft = kiss_fftr_alloc(N_FFT,0,nullptr,nullptr);
         // generate FFT frequencies
@@ -121,7 +125,7 @@ struct ImSpectrogram : App {
     }
 
     // Update function called once per frame
-    void update() override {
+    void Update() override {
 
         if (g_playing && m_time <= m_duration) {
             m_time += ImGui::GetIO().DeltaTime;
@@ -231,11 +235,7 @@ struct ImSpectrogram : App {
 
 // Main
 int main(int argc, char const *argv[]) {
-    if (argc < 2) {
-        std::cout << "No input file provided!\n";
-        return -1;
-    }
-    ImSpectrogram app(argv[1]);
-    app.run();
+    ImSpectrogram app("ImSpectrogram",argc,argv);
+    app.Run();
     return 0;
 }

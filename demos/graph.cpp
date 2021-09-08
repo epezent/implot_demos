@@ -42,16 +42,16 @@ struct ImGraph : App {
     Expression expr;
     ImPlotLimits limits;
 
-    ImGraph(int w, int h, std::string title) :
-        App(w,h,title)
-    { 
+    using App::App;
+
+    void Start() override {
         expr.set("0.25*sin(2*pi*5*x)+0.5");
         expr.color = ImVec4(1,0.75f,0,1);
     }
 
-    void update() override {
+    void Update() override {
    
-        ImGui::SetNextWindowSize(get_window_size());
+        ImGui::SetNextWindowSize(GetWindowSize());
         ImGui::SetNextWindowPos({0,0});
 
         ImGui::Begin("ImGraph",nullptr,ImGuiWindowFlags_NoCollapse|ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoResize);
@@ -87,7 +87,7 @@ struct ImGraph : App {
 
 int main(int argc, char const *argv[])
 {
-    ImGraph app(640,480,"ImGraph");
-    app.run();
+    ImGraph app("ImGraph",640,480,argc,argv);
+    app.Run();
     return 0;
 }

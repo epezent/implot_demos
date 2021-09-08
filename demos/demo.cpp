@@ -6,15 +6,27 @@
 
 struct ImPlotDemo : App {
     using App::App;
-    void update() override {
+    void Update() override {
         ImPlot::ShowDemoWindow();   
-        ImGui::ShowDemoWindow(); 
+        // ImGui::ShowDemoWindow();
+        // ImPlot::ShowMetricsWindow();
+        // ImGui::ShowMetricsWindow();  
+
+        ImGui::Begin("Test");
+        ImGui::Button("Derp");
+        if (ImGui::BeginDragDropSource()) {
+            ImGui::Text("Derp");
+            ImGui::EndDragDropSource();
+        }
+        ImGui::End();
+
+
     }
 };
 
 int main(int argc, char const *argv[])
 {
-    ImPlotDemo app(1920,1080,"ImPlot Demo");
-    app.run();
+    ImPlotDemo app("ImPlot Demo",1920,1080,argc,argv);
+    app.Run();
     return 0;
 }

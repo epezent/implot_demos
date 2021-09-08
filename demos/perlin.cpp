@@ -14,14 +14,14 @@
 struct ImPerlin : App {
     using App::App;
 
-    void init() override {
+    void Start() override {
         generate_noise();
         ImPlot::GetStyle().Colormap = ImPlotColormap_Spectral;
     }
 
-    void update() override {
+    void Update() override {
         ImGui::SetNextWindowPos(ImVec2(0,0), ImGuiCond_Always);
-        ImGui::SetNextWindowSize(get_window_size(), ImGuiCond_Always);
+        ImGui::SetNextWindowSize(GetWindowSize(), ImGuiCond_Always);
         ImGui::Begin("Perlin", nullptr, ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoResize);
         ImGui::Text("FPS: %.2f", ImGui::GetIO().Framerate);
         // ImPlot::ShowColormapSelector("Colormap");
@@ -60,7 +60,7 @@ struct ImPerlin : App {
 
 int main(int argc, char const *argv[])
 {
-    ImPerlin demo(640,480,"ImPerlin", false);
-    demo.run();
+    ImPerlin demo("ImPerlin",640,480,argc,argv);
+    demo.Run();
     return 0;
 }

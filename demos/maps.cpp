@@ -315,14 +315,14 @@ private:
 struct ImMaps : public App {
     using App::App;
 
-    void update() override {
+    void Update() override {
         static int renders = 0;
         static bool debug = false;
         if (ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_A)))
             debug = !debug;
 
         ImGui::SetNextWindowPos({0,0});
-        ImGui::SetNextWindowSize(get_window_size());
+        ImGui::SetNextWindowSize(GetWindowSize());
         ImGui::Begin("Map",0,ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoTitleBar);
         if (debug) {
             int wk = mngr.threads_working();
@@ -335,8 +335,6 @@ struct ImMaps : public App {
 
         ImPlot::SetNextPlotLimits(0,1,0,1);
         ImPlotAxisFlags ax_flags = ImPlotAxisFlags_NoLabel | ImPlotAxisFlags_NoTickLabels | ImPlotAxisFlags_NoGridLines| ImPlotAxisFlags_Foreground;
-        ImPlot::PushStyleColor(ImPlotCol_XAxisGrid,ClearColor);
-        ImPlot::PushStyleColor(ImPlotCol_YAxisGrid,ClearColor);
         if (ImPlot::BeginPlot("##Map",0,0,ImVec2(-1,-1),ImPlotFlags_Equal|ImPlotFlags_NoMousePos,ax_flags,ax_flags|ImPlotAxisFlags_Invert)) {
             auto pos  = ImPlot::GetPlotPos();
             auto size = ImPlot::GetPlotSize();
@@ -354,7 +352,7 @@ struct ImMaps : public App {
                 auto [bmin,bmax] = coord.bounds();
                 if (tile != nullptr) {
                     auto col = debug ? ((coord.x % 2 == 0 && coord.y % 2 != 0) || (coord.x % 2 != 0 && coord.y % 2 == 0))? ImVec4(1,0,1,1) : ImVec4(1,1,0,1) : ImVec4(1,1,1,1);             
-                    ImPlot::PlotImage("##Tiles",(void*)(intptr_t)tile->image.Texture,bmin,bmax,{0,0},{1,1},col);
+                    ImPlot::PlotImage("##Tiles",(void*)(intptr_t)tile->image.ID,bmin,bmax,{0,0},{1,1},col);
                 }
                 if (debug) 
                     ImPlot::PlotText(coord.label().c_str(),(bmin.x+bmax.x)/2,(bmin.y+bmax.y)/2);                
@@ -368,15 +366,14 @@ struct ImMaps : public App {
             ImPlot::PopPlotClipRect();            
             ImPlot::EndPlot();
         }
-        ImPlot::PopStyleColor(2);
         ImGui::End();
     }
 
     TileManager mngr;
 };
 
-int main(int argc, char **argv)
+int main(int argc, char const *argv[])
 {
-    ImMaps app(960,540,"ImMaps");
-    app.run();    
+    ImMaps app("ImMaps",960,540,argc,argv);
+    app.Run();    
 }

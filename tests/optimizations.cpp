@@ -826,7 +826,7 @@ struct ImPlotBench : App
             file << std::setw(4) << j;
     }
 
-    void init() override
+    void Start() override
     {
         // if (fs::exists("bench.json")) {
             std::ifstream file("bench.json");
@@ -842,9 +842,9 @@ struct ImPlotBench : App
         ImPlot::CreateGpuContext();
     }
 
-    void update() override
+    void Update() override
     {
-        ImGui::SetNextWindowSize(get_window_size(), ImGuiCond_Always);
+        ImGui::SetNextWindowSize(GetWindowSize(), ImGuiCond_Always);
         ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always);
         ImGui::Begin("ImPlot Benchmark Tool",0,ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoTitleBar);
         if (ImGui::BeginTabBar("Tabs")) {
@@ -1142,8 +1142,8 @@ struct ImPlotBench : App
 
 int main(int argc, char const *argv[])
 {
-    ImPlotBench app(640, 480, "ImPlot Benchmark", false);
-    app.run();
+    ImPlotBench app("ImPlot Benchmark",640,480,argc,argv);
+    app.Run();
     return 0;
 }
 

@@ -1,18 +1,29 @@
 #pragma once
-#include <GL/gl3w.h>
+#include <glad/glad.h>
 #include <fstream>
-#include <sstream>
 #include <iostream>
+#include <sstream>
 
-struct Shader {
+struct Shader
+{
+    Shader() : ID(0) {}
+    Shader(const Shader &) = delete;
+    Shader &operator=(const Shader &) = delete;
+    ~Shader()
+    {
+        if (ID != 0)
+            glDeleteProgram(ID);
+    }
 
-    bool LoadFromFile(const char* vertPath, const char* fragPath, const char* geomPath = NULL) {
+    bool LoadFromFile(const char *vertPath, const char *fragPath,
+                      const char *geomPath = NULL)
+    {
         std::ifstream vertFile, fragFile, geomFile;
         std::string vertCode, fragCode, geomCode;
-        vertFile.exceptions (std::ifstream::failbit | std::ifstream::badbit);
-        fragFile.exceptions (std::ifstream::failbit | std::ifstream::badbit);
-        geomFile.exceptions (std::ifstream::failbit | std::ifstream::badbit);
-        try 
+        vertFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+        fragFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+        geomFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+        try
         {
             std::stringstream vertStream, fragStream, geomStream;
 
@@ -22,27 +33,30 @@ struct Shader {
             vertCode = vertStream.str();
 
             fragFile.open(fragPath);
-            fragStream << fragFile.rdbuf();		
+            fragStream << fragFile.rdbuf();
             fragFile.close();
             fragCode = fragStream.str();
 
-            if (geomPath != NULL) {
+            if (geomPath != NULL)
+            {
                 geomFile.open(geomPath);
-                geomStream << geomFile.rdbuf();		
+                geomStream << geomFile.rdbuf();
                 geomFile.close();
                 geomCode = geomStream.str();
             }
-
         }
-        catch(std::ifstream::failure e)
+        catch (std::ifstream::failure e)
         {
             std::cout << "Failed to read shader files!" << std::endl;
             return false;
         }
-        return LoadFromString(vertCode.c_str(), fragCode.c_str(), geomPath == NULL ? NULL : geomCode.c_str());
+        return LoadFromString(vertCode.c_str(), fragCode.c_str(),
+                              geomPath == NULL ? NULL : geomCode.c_str());
     }
 
-    bool LoadFromString(const char* vertSrc, const char* fragSrc, const char* geomSrc = NULL) {
+    bool LoadFromString(const char *vertSrc, const char *fragSrc,
+                        const char *geomSrc = NULL)
+    {
         int success;
         char infoLog[512];
         // compile vertex shader
@@ -50,9 +64,11 @@ struct Shader {
         glShaderSource(vertShader, 1, &vertSrc, NULL);
         glCompileShader(vertShader);
         glGetShaderiv(vertShader, GL_COMPILE_STATUS, &success);
-        if(!success) {
+        if (!success)
+        {
             glGetShaderInfoLog(vertShader, 512, NULL, infoLog);
-            std::cout << "Failed to compile vertex shader!\n" << infoLog << std::endl;
+            std::cout << "Failed to compile vertex shader!\n"
+                      << infoLog << std::endl;
             return false;
         }
         // compiler fragment shader
@@ -60,20 +76,25 @@ struct Shader {
         glShaderSource(fragShader, 1, &fragSrc, NULL);
         glCompileShader(fragShader);
         glGetShaderiv(fragShader, GL_COMPILE_STATUS, &success);
-        if(!success) {
+        if (!success)
+        {
             glGetShaderInfoLog(fragShader, 512, NULL, infoLog);
-            std::cout << "Failed to compile fragment shader!\n" << infoLog << std::endl;
+            std::cout << "Failed to compile fragment shader!\n"
+                      << infoLog << std::endl;
             return false;
         }
         GLuint geomShader;
-        if (geomSrc != NULL) {
+        if (geomSrc != NULL)
+        {
             geomShader = glCreateShader(GL_GEOMETRY_SHADER);
             glShaderSource(geomShader, 1, &geomSrc, NULL);
             glCompileShader(geomShader);
             glGetShaderiv(geomShader, GL_COMPILE_STATUS, &success);
-            if(!success) {
+            if (!success)
+            {
                 glGetShaderInfoLog(geomShader, 512, NULL, infoLog);
-                std::cout << "Failed to compile geometry shader!\n" << infoLog << std::endl;
+                std::cout << "Failed to compile geometry shader!\n"
+                          << infoLog << std::endl;
                 return false;
             }
         }
@@ -85,9 +106,11 @@ struct Shader {
         glAttachShader(ID, fragShader);
         glLinkProgram(ID);
         glGetProgramiv(ID, GL_LINK_STATUS, &success);
-        if(!success) {
+        if (!success)
+        {
             glGetProgramInfoLog(ID, 512, NULL, infoLog);
-            std::cout << "Failed to link shader program!\n" << infoLog << std::endl;
+            std::cout << "Failed to link shader program!\n"
+                      << infoLog << std::endl;
             return false;
         }
         // clean up
@@ -96,23 +119,25 @@ struct Shader {
         if (geomSrc != NULL)
             glDeleteShader(geomShader);
         return true;
-    }   
-
-    ~Shader() { if (ID != 0) glDeleteProgram(ID); }
-
-    void SetFloat(const char* name, float v) const {
-        glUniform1f(glGetUniformLocation(ID, name), v); 
-    }
-    
-    void SetFloat2(const char* name, const ImVec2& v) const {
-        glUniform2f(glGetUniformLocation(ID, name),v.x,v.y);
     }
 
-    void SetFloat4(const char* name, const ImVec4& v) const {
-        glUniform4f(glGetUniformLocation(ID, name),v.x,v.y,v.z,v.w);
+    void SetFloat(const char *name, float v) const
+    {
+        glUniform1f(glGetUniformLocation(ID, name), v);
     }
 
-    void SetMat4(const char* name, const float* v) const {
+    void SetFloat2(const char *name, const ImVec2 &v) const
+    {
+        glUniform2f(glGetUniformLocation(ID, name), v.x, v.y);
+    }
+
+    void SetFloat4(const char *name, const ImVec4 &v) const
+    {
+        glUniform4f(glGetUniformLocation(ID, name), v.x, v.y, v.z, v.w);
+    }
+
+    void SetMat4(const char *name, const float *v) const
+    {
         glUniformMatrix4fv(glGetUniformLocation(ID, name), 1, GL_FALSE, v);
     }
 

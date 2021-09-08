@@ -1,38 +1,36 @@
 #pragma once
-
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb/stb_image.h"
-
-#include <GL/gl3w.h>
+#include <stb/stb_image.h>
+#include <glad/glad.h>
 
 struct Image
 {
 
     Image() : Width(0),
               Height(0),
-              Texture(0)
+              ID(0)
     {
     }
 
-     Image( const Image& ) = delete; 
-     Image& operator=( const Image& ) = delete; 
+    Image(const Image &) = delete;
+    Image &operator=(const Image &) = delete;
 
     ~Image()
     {
-        if (Texture != 0)
-            glDeleteTextures(1, &Texture);
+        if (ID != 0)
+            glDeleteTextures(1, &ID);
     }
 
     bool LoadFromFile(const char *filepath)
     {
-        if (Texture != 0)
-            glDeleteTextures(1, &Texture);
-        Texture = 0;
+        if (ID != 0)
+            glDeleteTextures(1, &ID);
+        ID = 0;
         unsigned char *image_data = stbi_load(filepath, &Width, &Height, NULL, 4);
         if (image_data == nullptr)
             return false;
-        glGenTextures(1, &Texture);
-        glBindTexture(GL_TEXTURE_2D, Texture);
+        glGenTextures(1, &ID);
+        glBindTexture(GL_TEXTURE_2D, ID);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -47,5 +45,5 @@ struct Image
 
     int Width;
     int Height;
-    GLuint Texture;
+    GLuint ID;
 };

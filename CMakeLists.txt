@@ -18,20 +18,23 @@ FetchContent_MakeAvailable(glfw)
 FetchContent_Declare(iir GIT_REPOSITORY https://github.com/berndporr/iir1) 
 FetchContent_MakeAvailable(iir)
 
-set(CMAKE_USE_SCHANNEL ON)
-
+if (WIN32)
+  set(CMAKE_USE_SCHANNEL ON)
+endif()
 FetchContent_Declare(curl
 URL                    https://github.com/curl/curl/releases/download/curl-7_75_0/curl-7.75.0.tar.xz
 URL_HASH               SHA256=fe0c49d8468249000bda75bcfdf9e30ff7e9a86d35f1a21f428d79c389d55675 # the file hash for curl-7.75.0.tar.xz
-USES_TERMINAL_DOWNLOAD TRUE)   # <---- This is needed only for Ninja to show download progress
+USES_TERMINAL_DOWNLOAD TRUE) 
 FetchContent_MakeAvailable(curl)
-
 add_library(curl_int INTERFACE)
 target_link_libraries(curl_int INTERFACE libcurl)
 target_include_directories(curl_int INTERFACE ${curl_SOURCE_DIR}/include ${curl_BINARY_DIR}/include/curl)
 add_library(CURL::libcurl ALIAS curl_int)
 
 # LOCAL LIBS
+
+# GLAD
+add_subdirectory(3rdparty/glad)
 
 # KISS FFT
 set(KISS_SRC "3rdparty/kissfft/kiss_fft.h" 
@@ -53,10 +56,9 @@ set(IMGUI_HEADERS
     ../imgui/imstb_rectpack.h
     ../imgui/imstb_textedit.h
     ../imgui/imstb_truetype.h    
-    ../imgui/examples/libs/gl3w/GL/gl3w.h
-    ../imgui/examples/libs/gl3w/GL/glcorearb.h
     ../imgui/backends/imgui_impl_glfw.h
     ../imgui/backends/imgui_impl_opengl3.h
+    ../imgui/backends/imgui_impl_opengl3_loader.h
     ../imgui/misc/cpp/imgui_stdlib.h
 )
 
@@ -66,7 +68,6 @@ set(IMGUI_SRC
     ../imgui/imgui_tables.cpp
     ../imgui/imgui_widgets.cpp
     ../imgui/imgui.cpp
-    ../imgui/examples/libs/gl3w/GL/gl3w.c
     ../imgui/backends/imgui_impl_glfw.cpp
     ../imgui/backends/imgui_impl_opengl3.cpp
     ../imgui/misc/cpp/imgui_stdlib.cpp
@@ -78,7 +79,7 @@ add_library(imgui ${IMGUI_HEADERS} ${IMGUI_SRC})
 if(MSVC)
   target_compile_options(imgui PRIVATE /W4 /WX /FA /arch:AVX2 /fp:fast)
 endif()
-target_link_libraries(imgui PUBLIC glfw OpenGL::GL imm32)
+target_link_libraries(imgui PUBLIC glfw glad OpenGL::GL imm32)
 target_compile_definitions(imgui PRIVATE IMGUI_DLL_EXPORT)
 
 include_directories(../imgui/ ../imgui/examples ../imgui/examples/libs/gl3w ../imgui/backends ../imgui/misc/cpp)
@@ -95,7 +96,7 @@ target_link_libraries(implot PUBLIC imgui)
 target_compile_definitions(implot PUBLIC IMPLOT_DEBUG IMPLOT_DLL_EXPORT IMPLOT_BACKEND_ENABLE_OPENGL3 IMGUI_IMPL_OPENGL_LOADER_GL3W)
 set_property(TARGET implot PROPERTY CXX_STANDARD 11)
 if(MSVC)
-  target_compile_options(implot PRIVATE /W4 /WX /FA /arch:AVX2 /fp:fast /O2) 
+  target_compile_options(implot PRIVATE /W4 /WX /FA /arch:AVX2 /fp:fast) 
 else()
   target_compile_options(implot PRIVATE -Wall -Wextra -pedantic -Werror -mavx2 -Ofast)
 endif()
@@ -182,7 +183,7 @@ add_executable(optimizations "tests/optimizations.cpp")
 target_link_libraries(optimizations app)
 target_compile_features(optimizations PRIVATE cxx_std_17)
 if (MSVC)
-  target_compile_options(optimizations PRIVATE /FA /arch:AVX2 /fp:fast /O2)
+  target_compile_options(optimizations PRIVATE /FA /arch:AVX2 /fp:fast)
 else()
   target_compile_options(optimizations PRIVATE -lstdc++fs -mavx2 -Ofast)
 endif()
