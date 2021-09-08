@@ -187,7 +187,7 @@ void TickerTooltip(const TickerData& data, bool span_subplots = false) {
     const double half_width = 24*60*60*0.25*1.5;
     const bool hovered = span_subplots ? ImPlot::IsSubplotsHovered() : ImPlot::IsPlotHovered();
     if (hovered) {
-        ImPlotPoint mouse   = ImPlot::GetPlotMousePos();
+        ImPoint mouse   = ImPlot::GetPlotMousePos();
         mouse.x             = ImPlot::RoundTime(ImPlotTime::FromDouble(mouse.x), ImPlotTimeUnit_Day).ToDouble();
         float  tool_l       = ImPlot::PlotToPixels(mouse.x - half_width, mouse.y).x;
         float  tool_r       = ImPlot::PlotToPixels(mouse.x + half_width, mouse.y).x;
@@ -227,8 +227,8 @@ void PlotOHLC(const char* label_id, const TickerData& data, ImVec4 bullCol = ImV
         // fit data if requested
         if (ImPlot::FitThisFrame()) {
             for (int i = 0; i < data.size(); ++i) {
-                ImPlot::FitPoint(ImPlotPoint(data.time[i], data.low[i]));
-                ImPlot::FitPoint(ImPlotPoint(data.time[i], data.high[i]));
+                ImPlot::FitPoint(ImPoint(data.time[i], data.low[i]));
+                ImPlot::FitPoint(ImPoint(data.time[i], data.high[i]));
             }
         }
         // render data

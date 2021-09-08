@@ -163,9 +163,9 @@ struct ImSpectrogram : App {
         ImPlot::SetNextPlotFormatY("%g kHz");
         const float w  = ImGui::GetContentRegionAvail().x - 100 - ImGui::GetStyle().ItemSpacing.x;
         const float h = 320.0f;
-        if (ImPlot::BeginPlot("##Plot1",nullptr,nullptr,{w,h},ImPlotFlags_NoMousePos,ImPlotAxisFlags_NoTickLabels,ImPlotAxisFlags_Lock)) {
+        if (ImPlot::BeginPlot("##Plot1",nullptr,nullptr,{w,h},ImPlotFlags_NoMouseText,ImPlotAxisFlags_NoTickLabels,ImPlotAxisFlags_Lock)) {
             ImPlot::PlotHeatmap("##Heat",m_spectrogram.data(),N_FRQ,N_BIN,m_min_db,m_max_db,NULL,{tmin,0},{tmax,m_fft_frq[N_FRQ-1]/1000});
-            if (ImPlot::DragLineX("t",&m_time,true,{1,1,1,1}))
+            if (ImPlot::DragLineX("t",&m_time,{1,1,1,1}))
                 seek(m_time);
             ImPlot::EndPlot();
         }
@@ -190,11 +190,11 @@ struct ImSpectrogram : App {
                 double db = 20*log10(std::abs(spec.m_fft_out[i]));
                 double x = remap01((double)i,0.0,(double)(N_FRQ-1));
                 double y = remap(db,spec.m_min_db,spec.m_max_db,-1.0,1.0);
-                return ImPlotPoint(x,y);
+                return ImPoint(x,y);
             };
             auto getter2 = [](void*, int i) {
                 double x = remap01((double)i,0.0,(double)(N_FRQ-1));
-                return ImPlotPoint(x,-1.0);
+                return ImPoint(x,-1.0);
             };
             ImPlot::SetNextFillStyle({1,1,1,0.1f});
             ImPlot::PlotShadedG("##FreqDomain",getter1,this,getter2,nullptr,N_FRQ);

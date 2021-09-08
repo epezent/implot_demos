@@ -65,7 +65,7 @@ struct TileCoord {
     inline std::string path() const { return dir() + file(); }
     inline std::string url() const { return TILE_SERVER + subdir() + file(); }
     inline std::string label() const { return subdir() + std::to_string(y); }
-    std::tuple<ImPlotPoint,ImPlotPoint> bounds() const {
+    std::tuple<ImPoint,ImPoint> bounds() const {
         double n = std::pow(2,z);
         double t = 1.0 / n;
         return { 
@@ -128,7 +128,7 @@ public:
             worker.join();
     }
 
-    const std::vector<std::pair<TileCoord, std::shared_ptr<Tile>>>& get_region(ImPlotLimits view, ImVec2 pixels) {
+    const std::vector<std::pair<TileCoord, std::shared_ptr<Tile>>>& get_region(ImLimitsXY view, ImVec2 pixels) {
         double min_x = std::clamp(view.X.Min, 0.0, 1.0);
         double min_y = std::clamp(view.Y.Min, 0.0, 1.0);
         double size_x = std::clamp(view.X.Size(),0.0,1.0);
@@ -335,7 +335,7 @@ struct ImMaps : public App {
 
         ImPlot::SetNextPlotLimits(0,1,0,1);
         ImPlotAxisFlags ax_flags = ImPlotAxisFlags_NoLabel | ImPlotAxisFlags_NoTickLabels | ImPlotAxisFlags_NoGridLines| ImPlotAxisFlags_Foreground;
-        if (ImPlot::BeginPlot("##Map",0,0,ImVec2(-1,-1),ImPlotFlags_Equal|ImPlotFlags_NoMousePos,ax_flags,ax_flags|ImPlotAxisFlags_Invert)) {
+        if (ImPlot::BeginPlot("##Map",0,0,ImVec2(-1,-1),ImPlotFlags_Equal|ImPlotFlags_NoMouseText,ax_flags,ax_flags|ImPlotAxisFlags_Invert)) {
             auto pos  = ImPlot::GetPlotPos();
             auto size = ImPlot::GetPlotSize();
             auto limits = ImPlot::GetPlotLimits();

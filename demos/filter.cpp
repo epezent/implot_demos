@@ -114,7 +114,7 @@ struct ImFilter : public App {
         // plot waveforms
         ImPlot::SetNextPlotLimits(0,0.5,-2,2);
         if (ImPlot::BeginPlot("##Filter","Time [s]","Signal",ImVec2(-1,-1))) {
-            ImPlot::SetLegendLocation(ImPlotLocation_NorthEast);
+            ImPlot::SetupLegend(ImPlotLocation_NorthEast);
             ImPlot::PlotLine("x(t)", t, x, N);
             ImPlot::PlotLine("y(t)", t, y, N);
             ImPlot::EndPlot();
@@ -170,7 +170,7 @@ struct ImFilter : public App {
                     ImPlot::PlotShaded("##Mag1",result.f.data(),result.mag.data(),(int)result.f.size(),-INFINITY);
                     ImPlot::PlotLine("##Mag2",result.f.data(),result.mag.data(),(int)result.f.size());
                     ImPlot::AnnotateClamped(Fc[0],-3,ImVec2(5,-5),ImVec4(0.15f,0.15f,0.15f,1),"Half-Power Point");
-                    if (ImPlot::DragLineX("Fc",&Fc[0],true,ImVec4(0.15f,0.15f,0.15f,1)))
+                    if (ImPlot::DragLineX("Fc",&Fc[0],ImVec4(0.15f,0.15f,0.15f,1)))
                         filt_need_upate = true;
                     ImPlot::EndPlot();
                 }
@@ -182,7 +182,7 @@ struct ImFilter : public App {
                     ImPlot::SetNextFillStyle(IMPLOT_AUTO_COL, 0.250f);
                     ImPlot::PlotShaded("##Phase1",result.f.data(),result.phase.data(),(int)result.f.size(),-INFINITY);
                     ImPlot::PlotLine("##Phase2",result.f.data(),result.phase.data(),(int)result.f.size());
-                    if (ImPlot::DragLineX("Fc",&Fc[0],true,ImVec4(0.15f,0.15f,0.15f,1)))
+                    if (ImPlot::DragLineX("Fc",&Fc[0],ImVec4(0.15f,0.15f,0.15f,1)))
                         filt_need_upate = true;
                     ImPlot::EndPlot();
                 }
@@ -191,19 +191,19 @@ struct ImFilter : public App {
             if (ImGui::BeginTabItem("Amplitude")) {
                 ImPlot::SetNextPlotLimits(0,500,0,0.5);
                 if (ImPlot::BeginPlot("##Amp","Frequency [Hz]","Amplitude", ImVec2(-1,-1))) {
-                    ImPlot::SetLegendLocation(ImPlotLocation_NorthEast);
+                    ImPlot::SetupLegend(ImPlotLocation_NorthEast);
                     ImPlot::SetNextFillStyle(IMPLOT_AUTO_COL, 0.25f);
                     ImPlot::PlotShaded("x(f)",result.f.data(),result.ampx.data(),(int)result.f.size(),-INFINITY);
                     ImPlot::PlotLine("x(f)",result.f.data(),result.ampx.data(),(int)result.f.size());
                     ImPlot::SetNextFillStyle(IMPLOT_AUTO_COL, 0.25f);
                     ImPlot::PlotShaded("y(f)",result.f.data(),result.ampy.data(),(int)result.f.size(),-INFINITY);
                     ImPlot::PlotLine("y(f)",result.f.data(),result.ampy.data(),(int)result.f.size());
-                    if (ImPlot::DragLineX("Fc",&Fc[0],true,ImVec4(0.15f,0.15f,0.15f,1)))
+                    if (ImPlot::DragLineX("Fc",&Fc[0],ImVec4(0.15f,0.15f,0.15f,1)))
                         filt_need_upate = true;
 
-                    if (ImPlot::DragLineY("A1",&a[0],true,ImVec4(0.15f,0.15f,0.15f,1)))
+                    if (ImPlot::DragLineY("A1",&a[0],ImVec4(0.15f,0.15f,0.15f,1)))
                         signal_need_update = true;                    
-                    if (ImPlot::DragLineY("A2",&a[1],true,ImVec4(0.15f,0.15f,0.15f,1)))
+                    if (ImPlot::DragLineY("A2",&a[1],ImVec4(0.15f,0.15f,0.15f,1)))
                         signal_need_update = true;
                     ImPlot::EndPlot();
                 }
@@ -219,7 +219,7 @@ struct ImFilter : public App {
                 }
                 ImPlot::SetNextPlotLimits(0,500,-100,0);
                 if (ImPlot::BeginPlot("##Power","Frequency [Hz]","Power Spectral Density (dB/Hz)",ImVec2(-1,-1))) {
-                    ImPlot::SetLegendLocation(ImPlotLocation_NorthEast);
+                    ImPlot::SetupLegend(ImPlotLocation_NorthEast);
                     ImPlot::SetNextFillStyle(IMPLOT_AUTO_COL, 0.25f);
                     ImPlot::PlotShaded("x(f)",result.f.data(),pxx10.data(),(int)result.f.size(),-INFINITY);
                     ImPlot::PlotLine("x(f)",result.f.data(),pxx10.data(),(int)result.f.size());

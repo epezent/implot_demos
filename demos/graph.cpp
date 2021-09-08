@@ -40,7 +40,7 @@ struct Expression {
 struct ImGraph : App {
 
     Expression expr;
-    ImPlotLimits limits;
+    ImLimitsXY limits;
 
     using App::App;
 
@@ -74,7 +74,7 @@ struct ImGraph : App {
                     auto& self = *(ImGraph*)data;
                     double x = remap((double)idx, 0.0, 9999.0, self.limits.X.Min, self.limits.X.Max);
                     double y = self.expr.eval(x);
-                    return ImPlotPoint(x,y);
+                    return ImPoint(x,y);
                     },
                     this,
                     10000);
