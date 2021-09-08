@@ -88,22 +88,11 @@ void StyeColorsApp()
     colors[ImGuiCol_DockingEmptyBg] = ImVec4(0.38f, 0.38f, 0.38f, 1.00f);
 #endif
 
+    ImPlot::StyleColorsAuto();
+
     ImVec4 *pcolors = ImPlot::GetStyle().Colors;
-    pcolors[ImPlotCol_Line] = IMPLOT_AUTO_COL;
-    pcolors[ImPlotCol_Fill] = IMPLOT_AUTO_COL;
-    pcolors[ImPlotCol_MarkerOutline] = IMPLOT_AUTO_COL;
-    pcolors[ImPlotCol_MarkerFill] = IMPLOT_AUTO_COL;
-    pcolors[ImPlotCol_ErrorBar] = IMPLOT_AUTO_COL;
-    pcolors[ImPlotCol_FrameBg] = IMPLOT_AUTO_COL;
     pcolors[ImPlotCol_PlotBg] = ImVec4(0, 0, 0, 0);
     pcolors[ImPlotCol_PlotBorder] = ImVec4(0, 0, 0, 0);
-    pcolors[ImPlotCol_LegendBg] = IMPLOT_AUTO_COL;
-    pcolors[ImPlotCol_LegendBorder] = IMPLOT_AUTO_COL;
-    pcolors[ImPlotCol_LegendText] = IMPLOT_AUTO_COL;
-    pcolors[ImPlotCol_TitleText] = IMPLOT_AUTO_COL;
-    pcolors[ImPlotCol_InlayText] = IMPLOT_AUTO_COL;
-    // pcolors[ImPlotCol_AxisText] = IMPLOT_AUTO_COL;
-    // pcolors[ImPlotCol_AxisGrid] = IMPLOT_AUTO_COL;
     pcolors[ImPlotCol_Selection] = attention;
     pcolors[ImPlotCol_Crosshairs] = colors[ImGuiCol_Text];
 
