@@ -128,7 +128,7 @@ public:
             worker.join();
     }
 
-    const std::vector<std::pair<TileCoord, std::shared_ptr<Tile>>>& get_region(ImLimitsXY view, ImVec2 pixels) {
+    const std::vector<std::pair<TileCoord, std::shared_ptr<Tile>>>& get_region(ImBounds view, ImVec2 pixels) {
         double min_x = std::clamp(view.X.Min, 0.0, 1.0);
         double min_y = std::clamp(view.Y.Min, 0.0, 1.0);
         double size_x = std::clamp(view.X.Size(),0.0,1.0);

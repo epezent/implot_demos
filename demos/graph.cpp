@@ -40,7 +40,7 @@ struct Expression {
 struct ImGraph : App {
 
     Expression expr;
-    ImLimitsXY limits;
+    ImBounds limits;
 
     using App::App;
 

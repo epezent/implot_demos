@@ -11,16 +11,6 @@ struct ImPlotDemo : App {
         // ImGui::ShowDemoWindow();
         // ImPlot::ShowMetricsWindow();
         // ImGui::ShowMetricsWindow();  
-
-        ImGui::Begin("Test");
-        ImGui::Button("Derp");
-        if (ImGui::BeginDragDropSource()) {
-            ImGui::Text("Derp");
-            ImGui::EndDragDropSource();
-        }
-        ImGui::End();
-
-
     }
 };
 
