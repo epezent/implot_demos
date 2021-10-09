@@ -9,8 +9,20 @@ struct ImPlotDemo : App {
     void Update() override {
         ImPlot::ShowDemoWindow();   
         // ImGui::ShowDemoWindow();
-        // ImPlot::ShowMetricsWindow();
+        ImPlot::ShowMetricsWindow();
         // ImGui::ShowMetricsWindow();  
+
+        ImGui::Begin("Test");
+        if (ImPlot::BeginPlot("MyPlot")) {
+
+            // ImPlot::SetupAxis(ImAxis_X2);
+            // ImPlot::SetupAxis(ImAxis_X3);
+            // ImPlot::SetupAxis(ImAxis_Y2);
+            // ImPlot::SetupAxis(ImAxis_Y3);
+
+            ImPlot::EndPlot();
+        }
+        ImGui::End();
     }
 };
 

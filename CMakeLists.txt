@@ -132,6 +132,8 @@ target_link_libraries(app implot)
 add_executable(demo "demos/demo.cpp")
 target_link_libraries(demo app)
 
+#[[
+
 # maps demo
 add_executable(maps "demos/maps.cpp")
 target_link_libraries(maps app CURL::libcurl)
@@ -175,15 +177,18 @@ add_executable(stocks "demos/stocks.cpp" )
 target_link_libraries(stocks app fmt::fmt CURL::libcurl)
 target_compile_features(stocks PRIVATE cxx_std_17)
 
+
 ###############################################################################
 # TEST APPS
 ###############################################################################
 
-add_executable(optimizations "tests/optimizations.cpp")
-target_link_libraries(optimizations app)
-target_compile_features(optimizations PRIVATE cxx_std_17)
-if (MSVC)
-  target_compile_options(optimizations PRIVATE /FA /arch:AVX2 /fp:fast)
-else()
-  target_compile_options(optimizations PRIVATE -lstdc++fs -mavx2 -Ofast)
-endif()
+# add_executable(optimizations "tests/optimizations.cpp")
+# target_link_libraries(optimizations app)
+# target_compile_features(optimizations PRIVATE cxx_std_17)
+# if (MSVC)
+#   target_compile_options(optimizations PRIVATE /FA /arch:AVX2 /fp:fast)
+# else()
+#   target_compile_options(optimizations PRIVATE -lstdc++fs -mavx2 -Ofast)
+# endif()
+
+#]]
