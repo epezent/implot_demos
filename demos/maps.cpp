@@ -32,7 +32,7 @@ namespace fs = std::filesystem;
 #define TILE_SERVER   "https://a.tile.openstreetmap.org/" // the tile map server url
 #define TILE_SIZE     256                                 // the expected size of tiles in pixels, e.g. 256x256px
 #define MAX_ZOOM      19                                  // the maximum zoom level provided by the server
-#define MAX_THREADS   2                                   // the maximum threads to use for downloading tiles (OSC stricly forbids more than 2)
+#define MAX_THREADS   2                                   // the maximum threads to use for downloading tiles (OSC strictly forbids more than 2)
 #define USER_AGENT    "ImMaps/0.1"                        // change this to represent your own app if you extend this code
 
 #define PI 3.14159265359
@@ -333,9 +333,11 @@ struct ImMaps : public App {
             ImGui::Text("FPS: %.2f    Working: %d    Downloads: %d    Loads: %d    Caches: %d    Fails: %d    Renders: %d", ImGui::GetIO().Framerate, wk, dl, ld, ca, fa, renders);
         }
 
-        ImPlot::SetNextPlotLimits(0,1,0,1);
         ImPlotAxisFlags ax_flags = ImPlotAxisFlags_NoLabel | ImPlotAxisFlags_NoTickLabels | ImPlotAxisFlags_NoGridLines| ImPlotAxisFlags_Foreground;
-        if (ImPlot::BeginPlot("##Map",0,0,ImVec2(-1,-1),ImPlotFlags_Equal|ImPlotFlags_NoMouseText,ax_flags,ax_flags|ImPlotAxisFlags_Invert)) {
+        if (ImPlot::BeginPlot("##Map",ImVec2(-1,-1),ImPlotFlags_Equal|ImPlotFlags_NoMouseText)) {
+            ImPlot::SetupAxes(NULL,NULL,ax_flags,ax_flags|ImPlotAxisFlags_Invert);
+            ImPlot::SetupAxesLimits(0,1,0,1);
+
             auto pos  = ImPlot::GetPlotPos();
             auto size = ImPlot::GetPlotSize();
             auto limits = ImPlot::GetPlotLimits();

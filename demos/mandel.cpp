@@ -266,17 +266,19 @@ struct ImMandel : App {
         ImGui::SetNextWindowSize(GetWindowSize(), ImGuiCond_Always);
         ImGui::Begin("##Mandel", nullptr, ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoResize);
 
-//         if (ImGui::Button(ICON_FA_HOME))
-//             ImPlot::SetNextPlotLimits(-2.5,1.5,-1.5,1.5,ImGuiCond_Always);
-//         ImGui::SameLine(); 
-//         ImGui::Checkbox("AVX",&avx); ImGui::SameLine();
-// #ifndef _OPENMP
-//         ImGui::Checkbox("Multithreaded",&mt); ImGui::SameLine();
-// #endif
-//         ImGui::Checkbox("Double",&dp); ImGui::SameLine();
-//         ImGui::Text("    FPS: %.2f", ImGui::GetIO().Framerate);
-        ImPlot::SetNextPlotLimits(-2.5,1.5,-1.5,1.5);
-        if (ImPlot::BeginPlot("##Terrain",0,0,ImVec2(-1,-1),0,ImPlotAxisFlags_NoDecorations,ImPlotAxisFlags_NoDecorations)) {
+        if (ImGui::Button(ICON_FA_HOME))
+            ImPlot::SetNextAxesLimits(-2.5,1.5,-1.5,1.5,ImGuiCond_Always);
+        ImGui::SameLine(); 
+        ImGui::Checkbox("AVX",&avx); ImGui::SameLine();
+#ifndef _OPENMP
+        ImGui::Checkbox("Multithreaded",&mt); ImGui::SameLine();
+#endif
+        ImGui::Checkbox("Double",&dp); ImGui::SameLine();
+        ImGui::Text("    FPS: %.2f", ImGui::GetIO().Framerate);
+        if (ImPlot::BeginPlot("##Terrain",ImVec2(-1,-1))) {
+            ImPlot::SetupAxes(NULL,NULL,ImPlotAxisFlags_NoDecorations,ImPlotAxisFlags_NoDecorations);
+            ImPlot::SetupAxesLimits(-2.5,1.5,-1.5,1.5);
+
             auto lims = ImPlot::GetPlotLimits();
             s.xlim[0] = lims.X.Min;
             s.xlim[1] = lims.X.Max;

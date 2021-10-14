@@ -3,7 +3,7 @@
 // Date:   6/26/2021
 
 #define IMGUI_DEFINE_MATH_OPERATORS
-#define APP_USE_DGPU
+// #define APP_USE_DGPU
 
 // #include <filesystem>
 #include "App.h"
@@ -56,14 +56,14 @@ namespace ImPlot
         PlotTransform() {}
         PlotTransform(ImPlotPlot *plot)
         {
-            int x = plot->CurrentX;
-            int y = plot->CurrentY;
-            M.x = (float)GImPlot->Mx[x];
-            M.y = (float)GImPlot->My[y];
-            PltMin.x = (float)plot->XAxis[x].Range.Min;
-            PltMin.y = (float)plot->YAxis[y].Range.Min;
-            PixMin.x = GImPlot->PixelRange[y].Min.x;
-            PixMin.y = GImPlot->PixelRange[y].Min.y;
+            int x    = 1; // plot->CurrentX;
+            int y    = 1; // plot->CurrentY;
+            M.x      = 1; // (float)GImPlot->Mx[x];
+            M.y      = 1; // (float)GImPlot->My[y];
+            PltMin.x = 1; // (float)plot->XAxis[x].Range.Min;
+            PltMin.y = 1; // (float)plot->YAxis[y].Range.Min;
+            PixMin.x = 1; // GImPlot->PixelRange[y].Min.x;
+            PixMin.y = 1; // GImPlot->PixelRange[y].Min.y;
         }
 
         ImVec2 M;
@@ -226,12 +226,12 @@ void PlotLineInline(const char *label_id, const ImVec2 *values, int count)
             unsigned int idx = 0;
             const ImVec2 uv = DrawList._Data->TexUvWhitePixel;
 
-            const float minx_pix = gp.PixelRange[0].Min.x;
-            const float miny_pix = gp.PixelRange[0].Min.y;
-            const float minx_plt = (float)gp.CurrentPlot->XAxis[0].Range.Min;
-            const float miny_plt = (float)gp.CurrentPlot->YAxis[0].Range.Min;
-            const float mx = (float)gp.Mx[0];
-            const float my = (float)gp.My[0];
+            const float minx_pix = 1; // gp.PixelRange[0].Min.x;
+            const float miny_pix = 1; // gp.PixelRange[0].Min.y;
+            const float minx_plt = 1; // (float)gp.CurrentPlot->XAxis[0].Range.Min;
+            const float miny_plt = 1; // (float)gp.CurrentPlot->YAxis[0].Range.Min;
+            const float mx       = 1; // (float)gp.Mx[0];
+            const float my       = 1; // (float)gp.My[0];
 
             ImRect cull_rect = gp.CurrentPlot->PlotRect;
             ImPoint plt = ImPoint(values[0].x, values[0].y);
@@ -395,13 +395,13 @@ void PlotLineAVX2(const char *label_id, const ImVec2 *V, int count) {
             const float weight = s.LineWeight;
             const ImVec2 uv = DrawList._Data->TexUvWhitePixel;
 
-            const float minx_pix = gp.PixelRange[0].Min.x;
-            const float miny_pix = gp.PixelRange[0].Min.y;
-            const float minx_plt = (float)gp.CurrentPlot->XAxis[0].Range.Min;
-            const float miny_plt = (float)gp.CurrentPlot->YAxis[0].Range.Min;
-            const float mx = (float)gp.Mx[0];
-            const float my = (float)gp.My[0];
-            unsigned int prims = (count - 1)/8;
+            const float minx_pix = 1;// gp.PixelRange[0].Min.x;
+            const float miny_pix = 1;// gp.PixelRange[0].Min.y;
+            const float minx_plt = 1;// (float)gp.CurrentPlot->XAxis[0].Range.Min;
+            const float miny_plt = 1;// (float)gp.CurrentPlot->YAxis[0].Range.Min;
+            const float mx       = 1;// (float)gp.Mx[0];
+            const float my       = 1;// (float)gp.My[0];
+            unsigned int prims   = (count - 1)/8;
             prims *= 8;
             
             __m256 minx_pix8 = _mm256_set1_ps(minx_pix);
@@ -869,9 +869,9 @@ struct ImPlotBench : App
     void ShowBenchmarkPlotOnly(int mode) {
         size_t call_time = 0;
         ImGui::Text("%.2f FPS", ImGui::GetIO().Framerate);
-        ImPlot::SetNextPlotLimits(0, 1000, 0, 1, ImGuiCond_Always);
         if (ImPlot::BeginPlot("##Bench", NULL, NULL, ImVec2(-1, -1), ImPlotFlags_NoChild | ImPlotFlags_CanvasOnly, ImPlotAxisFlags_NoDecorations, ImPlotAxisFlags_NoDecorations))
         {
+            ImPlot::SetupAxesLimits(0, 1000, 0, 1, ImGuiCond_Always);
             PlotBenchmarkItems(mode, max_items, call_time);
             ImPlot::EndPlot();
         }
@@ -974,9 +974,10 @@ struct ImPlotBench : App
         ImGui::ProgressBar((float)L / (float)(max_items - 1));
 
 
-        ImPlot::SetNextPlotLimits(0, 1000, 0, 1, ImGuiCond_Always);
-        if (ImPlot::BeginPlot("##Bench", NULL, NULL, ImVec2(-1, -1), ImPlotFlags_NoChild | ImPlotFlags_CanvasOnly, ImPlotAxisFlags_NoDecorations, ImPlotAxisFlags_NoDecorations))
+        if (ImPlot::BeginPlot("##Bench", ImVec2(-1, -1), ImPlotFlags_NoChild | ImPlotFlags_CanvasOnly))
         {
+            ImPlot::SetupAxesLimits(0, 1000, 0, 1, ImGuiCond_Always);
+            ImPlot::SetupAxes(NULL,NULL,ImPlotAxisFlags_NoDecorations, ImPlotAxisFlags_NoDecorations);
             PlotBenchmarkItems(mode, L, call_time);
             ImPlot::EndPlot();
         }
@@ -996,8 +997,7 @@ struct ImPlotBench : App
         ImGui::SameLine(); ImGui::Checkbox("Call Time",&show_call_time);
         ImGui::SameLine(); ImGui::Checkbox("FPS",&show_fps);
 
-        ImPlot::SetNextPlotLimits(0, max_items, 0,50);
-        ImPlot::SetNextPlotLimitsY(0,500,2,1);
+
         // ImPlot::SetNextPlotLimitsY(0,15,2,ImPlotYAxis_2);
         int flags = ImPlotFlags_NoChild;
         if (show_fps)
@@ -1008,6 +1008,8 @@ struct ImPlotBench : App
 
         if (ImPlot::BeginPlot("##Stats", "Items (1,000 pts each)", "Time (ms)", ImVec2(-1, -1), flags, 0,0,2,2,"FPS (Hz)"))
         {
+            ImPlot::SetupAxesLimits(0, max_items, 0,50);
+            ImPlot::SetupAxisLimits(ImAxis_Y2,0,500,ImPlotCond_Once);
             for (int run = 0; run < records.size(); ++run)
             {
                 if (records[run].items.size() > 1)

@@ -33,7 +33,8 @@ struct ImPerlin : App {
             generate_noise();
         static float mn = 0, mx = 1;
         ImGui::DragFloatRange2("Range",&mn,&mx,0.1f,-10,10);
-        if (ImPlot::BeginPlot("##Perlin",0,0,ImVec2(-1,-1),ImPlotFlags_CanvasOnly,ImPlotAxisFlags_NoDecorations,ImPlotAxisFlags_NoDecorations)) {
+        if (ImPlot::BeginPlot("##Perlin",ImVec2(-1,-1),ImPlotFlags_CanvasOnly)) {
+            ImPlot::SetupAxes(NULL,NULL,ImPlotAxisFlags_NoDecorations,ImPlotAxisFlags_NoDecorations);
             ImPlot::PlotHeatmap("##T",perlin_data.data(),rows,cols,mn,mx,NULL);
             ImPlot::EndPlot();
         }

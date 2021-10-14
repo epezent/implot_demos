@@ -112,8 +112,10 @@ struct ImFilter : public App {
         }
 
         // plot waveforms
-        ImPlot::SetNextPlotLimits(0,0.5,-2,2);
-        if (ImPlot::BeginPlot("##Filter","Time [s]","Signal",ImVec2(-1,-1))) {
+        if (ImPlot::BeginPlot("##Filter",ImVec2(-1,-1))) {
+            ImPlot::SetupAxes("Time [s]","Signal");
+            ImPlot::SetupAxesLimits(0,0.5,-2,2);
+
             ImPlot::SetupLegend(ImPlotLocation_NorthEast);
             ImPlot::PlotLine("x(t)", t, x, N);
             ImPlot::PlotLine("y(t)", t, y, N);
@@ -162,8 +164,9 @@ struct ImFilter : public App {
         if (ImGui::BeginTabBar("Plots")) {
             if (ImGui::BeginTabItem("Magnitude")) {
                 static const double co = -3;
-                ImPlot::SetNextPlotLimits(1,500,-100,10);
-                if (ImPlot::BeginPlot("##Bode1","Frequency [Hz]","Magnitude [dB]",ImVec2(-1,-1),0,ImPlotAxisFlags_LogScale)) {
+                if (ImPlot::BeginPlot("##Bode1",ImVec2(-1,-1))) {
+                    ImPlot::SetupAxesLimits(1,500,-100,10);
+                    ImPlot::SetupAxes("Frequency [Hz]","Magnitude [dB]",ImPlotAxisFlags_LogScale);
                     ImPlot::SetNextLineStyle({1,1,1,1});
                     ImPlot::PlotHLines("##3dB",&co,1);
                     ImPlot::SetNextFillStyle(IMPLOT_AUTO_COL, 0.250f);
@@ -177,8 +180,9 @@ struct ImFilter : public App {
                 ImGui::EndTabItem();
             }            
             if (ImGui::BeginTabItem("Phase")) {
-                ImPlot::SetNextPlotLimits(1,500,-180,10);
-                if (ImPlot::BeginPlot("##Bode2","Frequency [Hz]","Phase Angle [deg]",ImVec2(-1,-1),0,ImPlotAxisFlags_LogScale)) {   
+                if (ImPlot::BeginPlot("##Bode2",ImVec2(-1,-1))) {  
+                    ImPlot::SetupAxesLimits(1,500,-180,10);
+                    ImPlot::SetupAxes("Frequency [Hz]","Phase Angle [deg]",ImPlotAxisFlags_LogScale);
                     ImPlot::SetNextFillStyle(IMPLOT_AUTO_COL, 0.250f);
                     ImPlot::PlotShaded("##Phase1",result.f.data(),result.phase.data(),(int)result.f.size(),-INFINITY);
                     ImPlot::PlotLine("##Phase2",result.f.data(),result.phase.data(),(int)result.f.size());
@@ -189,8 +193,9 @@ struct ImFilter : public App {
                 ImGui::EndTabItem();
             }   
             if (ImGui::BeginTabItem("Amplitude")) {
-                ImPlot::SetNextPlotLimits(0,500,0,0.5);
-                if (ImPlot::BeginPlot("##Amp","Frequency [Hz]","Amplitude", ImVec2(-1,-1))) {
+                if (ImPlot::BeginPlot("##Amp",ImVec2(-1,-1))) {
+                    ImPlot::SetupAxesLimits(1,500,0,1.0);
+                    ImPlot::SetupAxes("Frequency [Hz]","Amplitude [dB]");
                     ImPlot::SetupLegend(ImPlotLocation_NorthEast);
                     ImPlot::SetNextFillStyle(IMPLOT_AUTO_COL, 0.25f);
                     ImPlot::PlotShaded("x(f)",result.f.data(),result.ampx.data(),(int)result.f.size(),-INFINITY);
@@ -217,8 +222,9 @@ struct ImFilter : public App {
                     pxx10[i] = 10*std::log10(result.pxx[i]);
                     pyy10[i] = 10*std::log10(result.pyy[i]);
                 }
-                ImPlot::SetNextPlotLimits(0,500,-100,0);
-                if (ImPlot::BeginPlot("##Power","Frequency [Hz]","Power Spectral Density (dB/Hz)",ImVec2(-1,-1))) {
+                if (ImPlot::BeginPlot("##Power",ImVec2(-1,-1))) {
+                    ImPlot::SetupAxesLimits(1,500,-100,0);
+                    ImPlot::SetupAxes("Frequency [Hz]","Power Spectral Density (dB/Hz)");
                     ImPlot::SetupLegend(ImPlotLocation_NorthEast);
                     ImPlot::SetNextFillStyle(IMPLOT_AUTO_COL, 0.25f);
                     ImPlot::PlotShaded("x(f)",result.f.data(),pxx10.data(),(int)result.f.size(),-INFINITY);

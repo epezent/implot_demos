@@ -158,15 +158,16 @@ struct ImSpectrogram : App {
             seek(m_time);
         const double tmin = (m_duration-T)*(m_time/m_duration);
         const double tmax = tmin + T;
-        ImPlot::SetNextPlotLimitsY(0,20);
-        ImPlot::SetNextPlotLimitsX(tmin, tmax, ImGuiCond_Always);
-        ImPlot::SetNextPlotFormatY("%g kHz");
         const float w  = ImGui::GetContentRegionAvail().x - 100 - ImGui::GetStyle().ItemSpacing.x;
         const float h = 320.0f;
-        if (ImPlot::BeginPlot("##Plot1",nullptr,nullptr,{w,h},ImPlotFlags_NoMouseText,ImPlotAxisFlags_NoTickLabels,ImPlotAxisFlags_Lock)) {
+        if (ImPlot::BeginPlot("##Plot1",ImVec2(w,h),ImPlotFlags_NoMouseText)) {
+            ImPlot::SetupAxes(NULL,NULL,ImPlotAxisFlags_NoTickLabels,ImPlotAxisFlags_Lock);
+            ImPlot::SetupAxisLimits(ImAxis_X1,tmin,tmax,ImGuiCond_Always);
+            ImPlot::SetupAxisLimits(ImAxis_Y1,0,20);
+            ImPlot::SetupAxisFormat(ImAxis_Y1,"%g kHz");
             ImPlot::PlotHeatmap("##Heat",m_spectrogram.data(),N_FRQ,N_BIN,m_min_db,m_max_db,NULL,{tmin,0},{tmax,m_fft_frq[N_FRQ-1]/1000});
-            if (ImPlot::DragLineX("t",&m_time,{1,1,1,1}))
-                seek(m_time);
+            if (ImPlot::DragLineX("t",&m_time,{1,1,1,1})) 
+                seek(m_time);            
             ImPlot::EndPlot();
         }
         ImGui::SameLine();
@@ -180,8 +181,9 @@ struct ImSpectrogram : App {
         }
 
         ImPlot::PushStyleVar(ImPlotStyleVar_PlotMinSize,{0,0});
-        ImPlot::SetNextPlotLimits(0,1,-1,1,ImGuiCond_Always);
-        if (ImPlot::BeginPlot("##Plot2",nullptr,nullptr,{-1,-1},ImPlotFlags_CanvasOnly,ImPlotAxisFlags_NoDecorations,ImPlotAxisFlags_NoDecorations)) {
+        if (ImPlot::BeginPlot("##Plot2",ImVec2(-1,-1),ImPlotFlags_CanvasOnly)) {
+            ImPlot::SetupAxes(NULL,NULL,ImPlotAxisFlags_NoDecorations,ImPlotAxisFlags_NoDecorations);
+            ImPlot::SetupAxesLimits(0,1,-1,1,ImGuiCond_Always);
             int idx = (int)((m_samples.size() - N_FFT) * (m_time/m_duration));
             idx -= idx % N_FFT;
             kiss_fftr(m_fft, &m_samples[idx], reinterpret_cast<kiss_fft_cpx*>(m_fft_out));
@@ -221,10 +223,10 @@ struct ImSpectrogram : App {
 
     // Seek to playback time
     void seek(double time) {
-        m_time = time;
+        m_time = std::clamp(time, 0.0, m_duration);
         if (!g_playing)
-            update_spectrogram(time);
-        double t = time / m_duration;
+            update_spectrogram(m_time);
+        double t = m_time / m_duration;
         auto frame = (int)((m_samples.size()-1) * t);
         {
             std::lock_guard<std::mutex> lock(g_mtx);

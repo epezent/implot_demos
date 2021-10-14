@@ -253,7 +253,7 @@ struct ImStocks : App
     using App::App;
 
     void Start() override {
-        m_ticker_data.push_back(m_api.get_ticker("AAPL", "2016-07-01", "2021-07-01", Interval_Daily));
+        m_ticker_data.push_back(m_api.get_ticker("AAPL", "2016-07-01", "2021-10-12", Interval_Daily));
         ImPlot::GetStyle().FitPadding.y = 0.2f;
     }
 
@@ -278,7 +278,7 @@ struct ImStocks : App
 
         static char buff[8] = "AAPL";
         if (ImGui::InputText("Ticker",buff,8,ImGuiInputTextFlags_EnterReturnsTrue|ImGuiInputTextFlags_CharsUppercase)) {
-            m_ticker_data.push_back(m_api.get_ticker(buff, "2016-07-01", "2021-07-01", Interval_Daily));
+            m_ticker_data.push_back(m_api.get_ticker(buff, "2016-07-01", "2021-10-12", Interval_Daily));
         }
 
     
@@ -287,9 +287,10 @@ struct ImStocks : App
                 if (ImGui::BeginTabItem(data.ticker.c_str())) {               
                     static float ratios[] = {2,1};
                     if (ImPlot::BeginSubplots("##Stocks",2,1,ImVec2(-1,-1),ImPlotSubplotFlags_LinkCols,ratios)) {
-                        ImPlot::SetNextPlotLimitsX(data.time[0],data.time.back());
-                        ImPlot::SetNextPlotFormatY("$%.0f");
-                        if (ImPlot::BeginPlot("##dataPlot",0,0,ImVec2(0,0),0,ImPlotAxisFlags_Time|ImPlotAxisFlags_NoTickLabels,ImPlotAxisFlags_AutoFit|ImPlotAxisFlags_RangeFit)) {
+                        if (ImPlot::BeginPlot("##OHLCPlot")) {
+                            ImPlot::SetupAxes(0,0,ImPlotAxisFlags_Time|ImPlotAxisFlags_NoTickLabels,ImPlotAxisFlags_AutoFit|ImPlotAxisFlags_RangeFit|ImPlotAxisFlags_Opposite);
+                            ImPlot::SetupAxisLimits(ImAxis_X1, data.time[0], data.time.back());
+                            ImPlot::SetupAxisFormat(ImAxis_Y1, "$%.0f");
                             TickerTooltip(data, true);                            
                             ImPlot::SetNextFillStyle(ImVec4(0.5,0.5,1,1),0.25f);
                             ImPlot::PlotShaded("BB",data.time.data(),data.bollinger_top.data(),data.bollinger_bot.data(),data.size());
@@ -301,9 +302,10 @@ struct ImStocks : App
                             ImPlot::PlotLine("Close",data.time.data(),data.close.data(),data.size());
                             ImPlot::EndPlot();
                         }
-                        ImPlot::SetNextPlotLimitsX(data.time[0],data.time.back());
-                        ImPlot::SetNextPlotFormatY("%.0fM");
-                        if (ImPlot::BeginPlot("##VolumePlot",0,0,ImVec2(0,0),0,ImPlotAxisFlags_Time,ImPlotAxisFlags_AutoFit|ImPlotAxisFlags_RangeFit)) {
+                        if (ImPlot::BeginPlot("##VolumePlot")) {
+                            ImPlot::SetupAxes(0,0,ImPlotAxisFlags_Time,ImPlotAxisFlags_AutoFit|ImPlotAxisFlags_RangeFit|ImPlotAxisFlags_Opposite);
+                            ImPlot::SetupAxisLimits(ImAxis_X1, data.time[0], data.time.back());
+                            ImPlot::SetupAxisFormat(ImAxis_Y1, "%.0fM");
                             TickerTooltip(data, true);
                             ImPlot::SetNextFillStyle(ImVec4(1.f,0.75f,0.25f,1));
                             ImPlot::PlotBars("Volume",data.time.data(),data.volume.data(),data.size(),60*60*24*0.5);
