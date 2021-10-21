@@ -14,12 +14,7 @@
 #include "Fonts/Fonts.h"
 #include "Helpers.h"
 
-/// Macro to request high performance GPU in systems (usually laptops) with both
-/// dedicated and discrete GPUs
-#if defined(_WIN32) && defined(APP_USE_DGPU)
-    extern "C" __declspec(dllexport) unsigned long NvOptimusEnablement = 1;
-    extern "C" __declspec(dllexport) unsigned long AmdPowerXpressRequestHighPerformance = 1;
-#endif
+#include "cxxopts.hpp"
 
 /// Macro to disable console on Windows
 #if defined(_WIN32) && defined(APP_NO_CONSOLE)
@@ -31,6 +26,7 @@ struct App
 {
     // Constructor.
     App(std::string title, int w, int h, int argc, char const *argv[]);
+    App(std::string title, int w, int h, cxxopts::Options options);
     // Destructor.
     virtual ~App();
     // Called at top of run

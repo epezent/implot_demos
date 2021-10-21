@@ -2,10 +2,16 @@
 #include "imgui_internal.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
-#include "cxxopts.hpp"
 
 #if defined(_MSC_VER) && (_MSC_VER >= 1900) && !defined(IMGUI_DISABLE_WIN32_FUNCTIONS)
 #pragma comment(lib, "legacy_stdio_definitions")
+#endif
+
+/// Macro to request high performance GPU in systems (usually laptops) with both
+/// dedicated and discrete GPUs
+#if defined(_WIN32)
+    extern "C" __declspec(dllexport) unsigned long NvOptimusEnablement = 0;
+    extern "C" __declspec(dllexport) unsigned long AmdPowerXpressRequestHighPerformance = 0;
 #endif
 
 void StyeColorsApp()
@@ -114,6 +120,7 @@ static void glfw_error_callback(int error, const char *description)
     fprintf(stderr, "GLFW Error %d: %s\n", error, description);
 }
 
+
 App::App(std::string title, int w, int h, int argc, char const *argv[])
 {
     cxxopts::Options options(title);
@@ -121,7 +128,11 @@ App::App(std::string title, int w, int h, int argc, char const *argv[])
         ("v,vsync","Disable V-Sync")
         ("m,msaa","Enable MSAA")
         ("i,imgui","Use Default ImGui Style")
-        ("h,help","Show Help");
+        ("w,width", "Window width override",cxxopts::value<int>())
+        ("h,height", "Window height override",cxxopts::value<int>())
+        ("g,gpu", "Use discrete GPU on hybrid laptops")
+        ("help","Show Help");
+    
 
     auto result = options.parse(argc,argv);
     if (result.count("help"))
@@ -130,10 +141,16 @@ App::App(std::string title, int w, int h, int argc, char const *argv[])
         std::exit(0);
     }
 
+    if (result.count("width"))
+        w = result["width"].as<int>();
+    if (result.count("height"))
+        h = result["height"].as<int>(); 
+
     const bool no_vsync = result["vsync"].as<bool>();
     const bool use_msaa = result["msaa"].as<bool>();
     const bool im_style = result["imgui"].as<bool>();
-    
+    NvOptimusEnablement = AmdPowerXpressRequestHighPerformance = result["gpu"].as<bool>();
+
 #ifdef _DEBUG
     title += " - OpenGL - Debug";
 #else
@@ -160,10 +177,11 @@ App::App(std::string title, int w, int h, int argc, char const *argv[])
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+ only
-    //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);            // 3.0+ only
+    //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);          // 3.0+ only
 #endif
 
     if (use_msaa) {
+        title += " - 4X MSAA";
         glfwWindowHint(GLFW_SAMPLES, 4);
     }
 
@@ -184,6 +202,13 @@ App::App(std::string title, int w, int h, int argc, char const *argv[])
         fprintf(stderr, "Failed to initialize OpenGL loader!\n");
         abort();
     } 
+
+    const GLubyte* vendor = glGetString(GL_VENDOR); 
+    const GLubyte* renderer = glGetString(GL_RENDERER); 
+
+    title +=  " - ";
+    title += reinterpret_cast< char const * >(renderer);
+    glfwSetWindowTitle(Window, title.c_str());
 
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();

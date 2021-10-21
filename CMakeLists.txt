@@ -96,9 +96,14 @@ include_directories(3rdparty/imnodes)
 set(IMPLOT_HEADERS ../implot/implot.h ../implot/implot_internal.h)
 set(IMPLOT_SRC     ../implot/implot.cpp ../implot/implot_items.cpp ../implot/implot_demo.cpp) 
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../implot/backends")
+list(APPEND IMPLOT_HEADERS ../implot/backends/implot_backend.h ../implot/backends/implot_impl_opengl3.h)
+list(APPEND IMPLOT_SRC ../implot/backends/implot_backend.h ../implot/backends/implot_impl_opengl3.cpp)
+endif()
+
 add_library(implot ${IMPLOT_HEADERS} ${IMPLOT_SRC})
 target_link_libraries(implot PUBLIC imgui)
-target_compile_definitions(implot PUBLIC IMPLOT_DEBUG IMPLOT_DLL_EXPORT IMPLOT_BACKEND_ENABLE_OPENGL3 IMGUI_IMPL_OPENGL_LOADER_GL3W)
+target_compile_definitions(implot PUBLIC IMPLOT_DEBUG IMPLOT_DLL_EXPORT IMPLOT_BACKEND_ENABLE_OPENGL3 IMGUI_IMPL_OPENGL_LOADER_GLAD)
 set_property(TARGET implot PROPERTY CXX_STANDARD 11)
 if(MSVC)
   target_compile_options(implot PRIVATE /W4 /WX /arch:AVX2 /fp:fast /permissive-) 
@@ -187,6 +192,11 @@ target_compile_features(stocks PRIVATE cxx_std_17)
 add_executable(optimizations "tests/optimizations.cpp")
 target_link_libraries(optimizations app)
 target_compile_features(optimizations PRIVATE cxx_std_17)
+add_custom_command(TARGET spectrogram POST_BUILD 
+                   COMMAND ${CMAKE_COMMAND} -E copy_directory 
+                   ${CMAKE_CURRENT_SOURCE_DIR}/resources/shaders/
+                   $<TARGET_FILE_DIR:spectrogram>/shaders/)
+
 if (MSVC)
   target_compile_options(optimizations PRIVATE /arch:AVX2 /fp:fast)
 else()
