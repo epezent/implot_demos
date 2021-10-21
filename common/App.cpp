@@ -102,6 +102,7 @@ void StyeColorsApp()
     pstyle.PlotPadding = pstyle.LegendPadding = {12, 12};
     pstyle.LabelPadding = pstyle.LegendInnerPadding = {6, 6};
     pstyle.LegendSpacing = {10, 2};
+    pstyle.AnnotationPadding = {4,2};
 
     const ImU32 Dracula[]  = {4288967266, 4285315327, 4286315088, 4283782655, 4294546365, 4287429361, 4291197439, 4294830475, 4294113528, 4284106564                        };
     ImPlot::GetStyle().Colormap = ImPlot::AddColormap("Dracula",Dracula,10);

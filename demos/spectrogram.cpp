@@ -75,11 +75,7 @@ struct ImSpectrogram : App {
         App(title, WIN_W,WIN_H,argc,argv),
         m_spectrogram(N_FRQ*N_BIN,0)
     {
-        if (argc < 2) {
-            std::cout << "No input file provided!\n";
-            return;
-        }
-        std::string filepath = argv[1];
+        std::string filepath = (argc < 2) ? "aphex_twin_formula.wav" : argv[1];
         // allocate FFT memory
         m_fft = kiss_fftr_alloc(N_FFT,0,nullptr,nullptr);
         // generate FFT frequencies
@@ -166,7 +162,7 @@ struct ImSpectrogram : App {
             ImPlot::SetupAxisLimits(ImAxis_Y1,0,20);
             ImPlot::SetupAxisFormat(ImAxis_Y1,"%g kHz");
             ImPlot::PlotHeatmap("##Heat",m_spectrogram.data(),N_FRQ,N_BIN,m_min_db,m_max_db,NULL,{tmin,0},{tmax,m_fft_frq[N_FRQ-1]/1000});
-            if (ImPlot::DragLineX("t",&m_time,{1,1,1,1})) 
+            if (ImPlot::DragLineX(838492,&m_time,{1,1,1,1},1,ImPlotDragToolFlags_Delayed)) 
                 seek(m_time);            
             ImPlot::EndPlot();
         }
@@ -192,11 +188,11 @@ struct ImSpectrogram : App {
                 double db = 20*log10(std::abs(spec.m_fft_out[i]));
                 double x = remap01((double)i,0.0,(double)(N_FRQ-1));
                 double y = remap(db,spec.m_min_db,spec.m_max_db,-1.0,1.0);
-                return ImPoint(x,y);
+                return ImPlotPoint(x,y);
             };
             auto getter2 = [](void*, int i) {
                 double x = remap01((double)i,0.0,(double)(N_FRQ-1));
-                return ImPoint(x,-1.0);
+                return ImPlotPoint(x,-1.0);
             };
             ImPlot::SetNextFillStyle({1,1,1,0.1f});
             ImPlot::PlotShadedG("##FreqDomain",getter1,this,getter2,nullptr,N_FRQ);

@@ -172,8 +172,8 @@ struct ImFilter : public App {
                     ImPlot::SetNextFillStyle(IMPLOT_AUTO_COL, 0.250f);
                     ImPlot::PlotShaded("##Mag1",result.f.data(),result.mag.data(),(int)result.f.size(),-INFINITY);
                     ImPlot::PlotLine("##Mag2",result.f.data(),result.mag.data(),(int)result.f.size());
-                    ImPlot::AnnotateClamped(Fc[0],-3,ImVec2(5,-5),ImVec4(0.15f,0.15f,0.15f,1),"Half-Power Point");
-                    if (ImPlot::DragLineX("Fc",&Fc[0],ImVec4(0.15f,0.15f,0.15f,1)))
+                    ImPlot::Annotation(Fc[0],-3,ImVec4(0.15f,0.15f,0.15f,1),ImVec2(5,-5),true,"Half-Power Point");
+                    if (ImPlot::DragLineX(148884,&Fc[0],ImVec4(0.15f,0.15f,0.15f,1)))
                         filt_need_upate = true;
                     ImPlot::EndPlot();
                 }
@@ -186,7 +186,7 @@ struct ImFilter : public App {
                     ImPlot::SetNextFillStyle(IMPLOT_AUTO_COL, 0.250f);
                     ImPlot::PlotShaded("##Phase1",result.f.data(),result.phase.data(),(int)result.f.size(),-INFINITY);
                     ImPlot::PlotLine("##Phase2",result.f.data(),result.phase.data(),(int)result.f.size());
-                    if (ImPlot::DragLineX("Fc",&Fc[0],ImVec4(0.15f,0.15f,0.15f,1)))
+                    if (ImPlot::DragLineX(439829,&Fc[0],ImVec4(0.15f,0.15f,0.15f,1)))
                         filt_need_upate = true;
                     ImPlot::EndPlot();
                 }
@@ -203,12 +203,12 @@ struct ImFilter : public App {
                     ImPlot::SetNextFillStyle(IMPLOT_AUTO_COL, 0.25f);
                     ImPlot::PlotShaded("y(f)",result.f.data(),result.ampy.data(),(int)result.f.size(),-INFINITY);
                     ImPlot::PlotLine("y(f)",result.f.data(),result.ampy.data(),(int)result.f.size());
-                    if (ImPlot::DragLineX("Fc",&Fc[0],ImVec4(0.15f,0.15f,0.15f,1)))
+                    if (ImPlot::DragLineX(397391,&Fc[0],ImVec4(0.15f,0.15f,0.15f,1)))
                         filt_need_upate = true;
 
-                    if (ImPlot::DragLineY("A1",&a[0],ImVec4(0.15f,0.15f,0.15f,1)))
+                    if (ImPlot::DragLineY(939031,&a[0],ImVec4(0.15f,0.15f,0.15f,1)))
                         signal_need_update = true;                    
-                    if (ImPlot::DragLineY("A2",&a[1],ImVec4(0.15f,0.15f,0.15f,1)))
+                    if (ImPlot::DragLineY(183853,&a[1],ImVec4(0.15f,0.15f,0.15f,1)))
                         signal_need_update = true;
                     ImPlot::EndPlot();
                 }

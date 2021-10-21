@@ -77,12 +77,17 @@ find_package(OpenGL REQUIRED)
 
 add_library(imgui ${IMGUI_HEADERS} ${IMGUI_SRC})
 if(MSVC)
-  target_compile_options(imgui PRIVATE /W4 /WX /FA /arch:AVX2 /fp:fast)
+  target_compile_options(imgui PRIVATE /W4 /WX /arch:AVX2 /fp:fast)
 endif()
 target_link_libraries(imgui PUBLIC glfw glad OpenGL::GL imm32)
 target_compile_definitions(imgui PRIVATE IMGUI_DLL_EXPORT)
 
 include_directories(../imgui/ ../imgui/examples ../imgui/examples/libs/gl3w ../imgui/backends ../imgui/misc/cpp)
+
+# imnodes
+add_library(imnodes 3rdparty/imnodes/imnodes.h 3rdparty/imnodes/imnodes_internal.h 3rdparty/imnodes/imnodes.cpp)
+target_link_libraries(imnodes imgui)
+include_directories(3rdparty/imnodes)
 
 ###############################################################################
 # IMPLOT
@@ -96,7 +101,7 @@ target_link_libraries(implot PUBLIC imgui)
 target_compile_definitions(implot PUBLIC IMPLOT_DEBUG IMPLOT_DLL_EXPORT IMPLOT_BACKEND_ENABLE_OPENGL3 IMGUI_IMPL_OPENGL_LOADER_GL3W)
 set_property(TARGET implot PROPERTY CXX_STANDARD 11)
 if(MSVC)
-  target_compile_options(implot PRIVATE /W4 /WX /FA /arch:AVX2 /fp:fast) 
+  target_compile_options(implot PRIVATE /W4 /WX /arch:AVX2 /fp:fast /permissive-) 
 else()
   target_compile_options(implot PRIVATE -Wall -Wextra -pedantic -Werror -mavx2 -Ofast)
 endif()
@@ -147,7 +152,7 @@ add_executable(mandel "demos/mandel.cpp")
 target_link_libraries(mandel app)
 target_include_directories(mandel PRIVATE "3rdparty")
 if (MSVC)
-  target_compile_options(mandel PRIVATE /FA /arch:AVX2 /fp:fast /openmp)
+  target_compile_options(mandel PRIVATE /arch:AVX2 /fp:fast /openmp)
 endif()
 
 # graph demo
@@ -168,13 +173,12 @@ target_compile_definitions(filter PRIVATE kiss_fft_scalar=double NOMINMAX)
 add_executable(spectrogram "demos/spectrogram.cpp" ${KISS_SRC})              
 target_link_libraries(spectrogram app)        
 target_compile_features(spectrogram PRIVATE cxx_std_17)
-add_custom_command(TARGET spectrogram POST_BUILD  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/resources/audio/aphex_twin_formula.wav ${CMAKE_CURRENT_BINARY_DIR}/aphex_twin_formula.wav)
+add_custom_command(TARGET spectrogram POST_BUILD  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/resources/audio/aphex_twin_formula.wav $<TARGET_FILE_DIR:spectrogram>)
 
 # stocks demo
 add_executable(stocks "demos/stocks.cpp" )
 target_link_libraries(stocks app fmt::fmt CURL::libcurl)
 target_compile_features(stocks PRIVATE cxx_std_17)
-
 
 ###############################################################################
 # TEST APPS
@@ -184,7 +188,7 @@ add_executable(optimizations "tests/optimizations.cpp")
 target_link_libraries(optimizations app)
 target_compile_features(optimizations PRIVATE cxx_std_17)
 if (MSVC)
-  target_compile_options(optimizations PRIVATE /FA /arch:AVX2 /fp:fast)
+  target_compile_options(optimizations PRIVATE /arch:AVX2 /fp:fast)
 else()
   target_compile_options(optimizations PRIVATE -lstdc++fs -mavx2 -Ofast)
 endif()

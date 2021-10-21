@@ -100,21 +100,27 @@ public:
 
         if (!fs::exists(filename)) {
             fmt::print("Downloading {}\n",filename);
-            download_file(url, filename);  
+            if (!download_file(url, filename))
+            return TickerData("ERROR");
         }      
         else {
             fmt::print("Reloading {}\n",filename);
         }
 
-        TickerData data(ticker);
-        io::CSVReader<6> in(filename);
-        in.read_header(io::ignore_extra_column, "Date", "Open", "High", "Low", "Close", "Volume");
-        std::string date; double o; double h; double l; double c; double v;
-        while(in.read_row(date, o, h, l, c, v)){
-            double t = timestamp_from_string(date);
-            data.push_back(t,o,h,l,c,v);
+        try {
+            TickerData data(ticker);
+            io::CSVReader<6> in(filename);
+            in.read_header(io::ignore_extra_column, "Date", "Open", "High", "Low", "Close", "Volume");
+            std::string date; double o; double h; double l; double c; double v;
+            while(in.read_row(date, o, h, l, c, v)){
+                double t = timestamp_from_string(date);
+                data.push_back(t,o,h,l,c,v);
+            }
+            return data;
         }
-        return data;
+        catch (...) {
+            return TickerData("ERROR");
+        }
     }
 
 private:
@@ -149,8 +155,9 @@ private:
         #endif
     }
 
-    void download_file(std::string url, std::string filename)
+    bool download_file(std::string url, std::string filename)
     {
+        bool success = false;
         CURL *curl;
         FILE *fp;
         CURLcode res;
@@ -162,10 +169,12 @@ private:
             curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, NULL);
             curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
             res = curl_easy_perform(curl);
-            /* always cleanup */
+            if (res == 0)
+                success = true;
             curl_easy_cleanup(curl);
             fclose(fp);
         }
+        return success;
     }
 };
 
@@ -187,7 +196,7 @@ void TickerTooltip(const TickerData& data, bool span_subplots = false) {
     const double half_width = 24*60*60*0.25*1.5;
     const bool hovered = span_subplots ? ImPlot::IsSubplotsHovered() : ImPlot::IsPlotHovered();
     if (hovered) {
-        ImPoint mouse   = ImPlot::GetPlotMousePos();
+        ImPlotPoint mouse   = ImPlot::GetPlotMousePos();
         mouse.x             = ImPlot::RoundTime(ImPlotTime::FromDouble(mouse.x), ImPlotTimeUnit_Day).ToDouble();
         float  tool_l       = ImPlot::PlotToPixels(mouse.x - half_width, mouse.y).x;
         float  tool_r       = ImPlot::PlotToPixels(mouse.x + half_width, mouse.y).x;
@@ -227,8 +236,8 @@ void PlotOHLC(const char* label_id, const TickerData& data, ImVec4 bullCol = ImV
         // fit data if requested
         if (ImPlot::FitThisFrame()) {
             for (int i = 0; i < data.size(); ++i) {
-                ImPlot::FitPoint(ImPoint(data.time[i], data.low[i]));
-                ImPlot::FitPoint(ImPoint(data.time[i], data.high[i]));
+                ImPlot::FitPoint(ImPlotPoint(data.time[i], data.low[i]));
+                ImPlot::FitPoint(ImPlotPoint(data.time[i], data.high[i]));
             }
         }
         // render data
@@ -253,7 +262,9 @@ struct ImStocks : App
     using App::App;
 
     void Start() override {
-        m_ticker_data.push_back(m_api.get_ticker("AAPL", "2016-07-01", "2021-10-12", Interval_Daily));
+        auto d = m_api.get_ticker("AAPL", "2016-07-01", "2021-10-12", Interval_Daily);
+        if (d.ticker != "ERROR")
+            m_ticker_data.push_back(d);
         ImPlot::GetStyle().FitPadding.y = 0.2f;
     }
 
@@ -278,7 +289,11 @@ struct ImStocks : App
 
         static char buff[8] = "AAPL";
         if (ImGui::InputText("Ticker",buff,8,ImGuiInputTextFlags_EnterReturnsTrue|ImGuiInputTextFlags_CharsUppercase)) {
-            m_ticker_data.push_back(m_api.get_ticker(buff, "2016-07-01", "2021-10-12", Interval_Daily));
+            auto d = m_api.get_ticker(buff, "2016-07-01", "2021-10-12", Interval_Daily);
+            if (d.ticker != "ERROR")
+                m_ticker_data.push_back(d);
+            else 
+                fmt::print("Failed to get data for ticker symbol {}!\n",buff);
         }
 
     
@@ -297,9 +312,14 @@ struct ImStocks : App
                             ImPlot::SetNextLineStyle(ImVec4(0.5,0.5,1,1));
                             ImPlot::PlotLine("BB",data.time.data(),data.bollinger_mid.data(),data.size());
                             PlotOHLC("OHLC",data,bull_col,bear_col);                
-                            ImPlot::HideNextItem(true);
                             ImPlot::SetNextLineStyle(ImVec4(1,1,1,1));
                             ImPlot::PlotLine("Close",data.time.data(),data.close.data(),data.size());
+                            ImPlotRect bnds = ImPlot::GetPlotLimits();
+                            int close_idx = BinarySearch(data.time.data(), 0, data.size() - 1, ImPlot::RoundTime(ImPlotTime::FromDouble(bnds.X.Max), ImPlotTimeUnit_Day).ToDouble());
+                            if (close_idx == -1)
+                                close_idx = data.time.size()-1;
+                            double close_val = data.close[close_idx];
+                            ImPlot::TagY(close_val, ImVec4(1,1,1,1));
                             ImPlot::EndPlot();
                         }
                         if (ImPlot::BeginPlot("##VolumePlot")) {

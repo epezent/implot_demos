@@ -183,7 +183,7 @@ namespace ImPlot
         if (BeginItem(label_id, ImPlotCol_Line)) {
             if (FitThisFrame()) {
                 for (int i = 0; i < count; ++i) {
-                    FitPoint(ImPoint(points[i].x, points[i].y));
+                    FitPoint(ImPlotPoint(points[i].x, points[i].y));
                 }
             }
             const ImPlotNextItemData &s = GetItemData();
@@ -212,7 +212,7 @@ void PlotLineInline(const char *label_id, const ImVec2 *values, int count)
         {
             for (int i = 0; i < count; ++i)
             {
-                FitPoint(ImPoint(values[i].x, values[i].y));
+                FitPoint(ImPlotPoint(values[i].x, values[i].y));
             }
         }
         const ImPlotNextItemData &s = GetItemData();
@@ -234,14 +234,14 @@ void PlotLineInline(const char *label_id, const ImVec2 *values, int count)
             const float my       = 1; // (float)gp.My[0];
 
             ImRect cull_rect = gp.CurrentPlot->PlotRect;
-            ImPoint plt = ImPoint(values[0].x, values[0].y);
+            ImPlotPoint plt = ImPlotPoint(values[0].x, values[0].y);
             ImVec2 P1 = ImVec2(minx_pix + mx * ((float)plt.x - minx_plt),
                                miny_pix + my * ((float)plt.y - miny_plt));
             
             DrawList.PrimReserve(prims * 6, prims * 4);
             for (unsigned int idx = 0; idx < prims; ++idx)
             {
-                plt = ImPoint(values[idx+1].x, values[idx + 1].y);
+                plt = ImPlotPoint(values[idx+1].x, values[idx + 1].y);
                 ImVec2 P2 = ImVec2(minx_pix + mx * ((float)plt.x - minx_plt),
                                     miny_pix + my * ((float)plt.y - miny_plt));       
                 float dx = P2.x - P1.x;
@@ -289,7 +289,7 @@ void PlotLineNoTess(const char *label_id, const ImVec2 *values, int count)
         if (FitThisFrame())
         {
             for (int i = 0; i < count; ++i)
-                FitPoint(ImPoint(values[i].x, values[i].y));
+                FitPoint(ImPlotPoint(values[i].x, values[i].y));
         }
         const ImPlotNextItemData &s = GetItemData();
         ImDrawList &DrawList = *GetPlotDrawList();
@@ -347,7 +347,7 @@ void PlotLineNoWrite(const char *label_id, const ImVec2 *values, int count)
         if (FitThisFrame())
         {
             for (int i = 0; i < count; ++i)
-                FitPoint(ImPoint(values[i].x, values[i].y));
+                FitPoint(ImPlotPoint(values[i].x, values[i].y));
         }
         const ImPlotNextItemData &s = GetItemData();
         ImDrawList &DrawList = *GetPlotDrawList();
@@ -379,7 +379,7 @@ void PlotLineAVX2(const char *label_id, const ImVec2 *V, int count) {
         {
             for (int i = 0; i < count; ++i)
             {
-                FitPoint(ImPoint(V[i].x, V[i].y));
+                FitPoint(ImPlotPoint(V[i].x, V[i].y));
             }
         }
         const ImPlotNextItemData &s = GetItemData();
@@ -1063,7 +1063,7 @@ struct ImPlotBench : App
                     ScopedProfiler prof(call_time);
                     ImPlot::PlotLineG("##item", [](void* in, int idx) {
                         ImVec2* data = (ImVec2*)in;
-                        return ImPoint(data[idx].x,data[idx].y);
+                        return ImPlotPoint(data[idx].x,data[idx].y);
                     },items[i].Data,1000);
                 }
                 ImGui::PopID();

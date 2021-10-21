@@ -17,6 +17,7 @@
 #include <condition_variable>
 #include <stdexcept>
 #include <tuple>
+#include <atomic>
 
 #include "App.h"
 #include "Image.h"
@@ -65,7 +66,7 @@ struct TileCoord {
     inline std::string path() const { return dir() + file(); }
     inline std::string url() const { return TILE_SERVER + subdir() + file(); }
     inline std::string label() const { return subdir() + std::to_string(y); }
-    std::tuple<ImPoint,ImPoint> bounds() const {
+    std::tuple<ImPlotPoint,ImPlotPoint> bounds() const {
         double n = std::pow(2,z);
         double t = 1.0 / n;
         return { 
@@ -128,7 +129,7 @@ public:
             worker.join();
     }
 
-    const std::vector<std::pair<TileCoord, std::shared_ptr<Tile>>>& get_region(ImBounds view, ImVec2 pixels) {
+    const std::vector<std::pair<TileCoord, std::shared_ptr<Tile>>>& get_region(ImPlotRect view, ImVec2 pixels) {
         double min_x = std::clamp(view.X.Min, 0.0, 1.0);
         double min_y = std::clamp(view.Y.Min, 0.0, 1.0);
         double size_x = std::clamp(view.X.Size(),0.0,1.0);
