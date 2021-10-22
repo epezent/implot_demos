@@ -14,7 +14,6 @@ struct ImPlotDemo : App {
 
 int main(int argc, char const *argv[])
 {
-
     ImPlotDemo app("ImPlot Demo",1920,1080,argc,argv);
     app.Run();
     return 0;
