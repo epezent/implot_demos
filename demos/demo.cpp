@@ -8,6 +8,7 @@ struct ImPlotDemo : App {
     using App::App;
     void Update() override {
         ImPlot::ShowDemoWindow();   
+        ImGui::ShowDemoWindow();
         ImPlot::ShowMetricsWindow();
     }
 };

@@ -185,6 +185,11 @@ add_executable(stocks "demos/stocks.cpp" )
 target_link_libraries(stocks app fmt::fmt CURL::libcurl)
 target_compile_features(stocks PRIVATE cxx_std_17)
 
+# stocks demo
+add_executable(voice "demos/voice.cpp" ${KISS_SRC})              
+target_link_libraries(voice app)        
+target_compile_features(voice PRIVATE cxx_std_17)
+
 ###############################################################################
 # TEST APPS
 ###############################################################################
