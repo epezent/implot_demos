@@ -36,6 +36,9 @@ add_library(CURL::libcurl ALIAS curl_int)
 # GLAD
 add_subdirectory(3rdparty/glad)
 
+# NFD
+add_subdirectory(3rdparty/nativefiledialog-extended)
+
 # KISS FFT
 set(KISS_SRC "3rdparty/kissfft/kiss_fft.h" 
              "3rdparty/kissfft/kiss_fftr.h" 
@@ -121,6 +124,8 @@ add_library(app
   common/App.h
   common/App.cpp
   common/Shader.h
+  common/Native.h
+  common/Native.cpp
   common/Image.h
   common/Fonts/Fonts.h
   common/Fonts/FontAwesome5.cpp
@@ -132,7 +137,8 @@ add_library(app
   common/Fonts/RobotoMonoItalic.cpp
 )
 target_include_directories(app PUBLIC common)
-target_link_libraries(app implot)
+target_link_libraries(app implot nfd)
+target_compile_features(app PRIVATE cxx_std_17)
 
 ###############################################################################
 # DEMO APPS

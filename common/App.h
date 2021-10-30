@@ -11,6 +11,7 @@
 #include <string>
 #include <map>
 
+#include "Native.h"
 #include "Fonts/Fonts.h"
 #include "Helpers.h"
 
