@@ -27,7 +27,6 @@ struct App
 {
     // Constructor.
     App(std::string title, int w, int h, int argc, char const *argv[]);
-    App(std::string title, int w, int h, cxxopts::Options options);
     // Destructor.
     virtual ~App();
     // Called at top of run

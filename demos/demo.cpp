@@ -9,6 +9,8 @@ struct ImPlotDemo : App {
     void Update() override {
         ImPlot::ShowDemoWindow();   
         ImPlot::ShowMetricsWindow();
+
+        ImGui::ShowDemoWindow();
     }
 };
 

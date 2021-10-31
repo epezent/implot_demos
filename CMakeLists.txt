@@ -144,6 +144,9 @@ target_compile_features(app PRIVATE cxx_std_17)
 # DEMO APPS
 ###############################################################################
 
+add_executable(maptic "demos/maptic.cpp")
+target_link_libraries(maptic app imnodes)
+
 # main ImPlot demo
 add_executable(demo "demos/demo.cpp")
 target_link_libraries(demo app)
