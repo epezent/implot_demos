@@ -348,7 +348,7 @@ struct ImStocks : App
                     static float ratios[] = {2,1};
                     if (ImPlot::BeginSubplots("##Stocks",2,1,ImVec2(-1,-1),ImPlotSubplotFlags_LinkCols,ratios)) {
                         if (ImPlot::BeginPlot("##OHLCPlot")) {
-                            ImPlot::SetupAxes(0,0,ImPlotAxisFlags_Time|ImPlotAxisFlags_NoTickLabels,ImPlotAxisFlags_AutoFit|ImPlotAxisFlags_RangeFit|ImPlotAxisFlags_Opposite);
+                            ImPlot::SetupAxes(0,0,ImPlotAxisFlags_TimeScale|ImPlotAxisFlags_NoTickLabels,ImPlotAxisFlags_AutoFit|ImPlotAxisFlags_RangeFit|ImPlotAxisFlags_Opposite);
                             ImPlot::SetupAxisLimits(ImAxis_X1, data.time[0], data.time.back());
                             ImPlot::SetupAxisFormat(ImAxis_Y1, "$%.0f");
                             TickerTooltip(data, true);                            
@@ -368,7 +368,7 @@ struct ImStocks : App
                             ImPlot::EndPlot();
                         }
                         if (ImPlot::BeginPlot("##VolumePlot")) {
-                            ImPlot::SetupAxes(0,0,ImPlotAxisFlags_Time,ImPlotAxisFlags_AutoFit|ImPlotAxisFlags_RangeFit|ImPlotAxisFlags_Opposite);
+                            ImPlot::SetupAxes(0,0,ImPlotAxisFlags_TimeScale,ImPlotAxisFlags_AutoFit|ImPlotAxisFlags_RangeFit|ImPlotAxisFlags_Opposite);
                             ImPlot::SetupAxisLimits(ImAxis_X1, data.time[0], data.time.back());
                             ImPlot::SetupAxisFormat(ImAxis_Y1, VolumeFormatter);
                             TickerTooltip(data, true);

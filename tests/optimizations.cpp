@@ -67,8 +67,8 @@ namespace ImPlot
         {
             ImAxis x = plot->CurrentX;
             ImAxis y = plot->CurrentY;
-            M.x = plot->Axes[x].LinM;
-            M.y = plot->Axes[y].LinM;
+            M.x = plot->Axes[x].ScaleToPixel;
+            M.y = plot->Axes[y].ScaleToPixel;
             PltMin.x = (float)plot->Axes[x].Range.Min;
             PltMin.y = (float)plot->Axes[y].Range.Min;
             PixMin.x = plot->Axes[x].PixelMin;
@@ -735,7 +735,7 @@ struct ImPlotBench : App
                 ImPlot::SetNextLineStyle(items[i].Col);
                 {
                     ScopedProfiler prof(call_time);
-                    ImPlot::PlotLine("##item", &items[i].Data[0].x, &items[i].Data[0].y, 1000, 0, sizeof(ImVec2));
+                    ImPlot::PlotLine("##item", &items[i].Data[0].x, &items[i].Data[0].y, 1000, 0, 0, sizeof(ImVec2));
                 }
                 ImGui::PopID();
             }
@@ -781,7 +781,7 @@ struct ImPlotBench : App
                 ImPlot::SetNextLineStyle(items[i].Col);
                 {
                     ScopedProfiler prof(call_time);
-                    ImPlot::PlotLine("##item", &items[i].Data[0].x, &items[i].Data[0].y, 1000, 0, sizeof(ImVec2));
+                    ImPlot::PlotLine("##item", &items[i].Data[0].x, &items[i].Data[0].y, 1000, 0, 0, sizeof(ImVec2));
                 }
                 ImGui::PopID();
             }

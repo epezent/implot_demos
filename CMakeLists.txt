@@ -185,10 +185,15 @@ add_executable(stocks "demos/stocks.cpp" )
 target_link_libraries(stocks app fmt::fmt CURL::libcurl)
 target_compile_features(stocks PRIVATE cxx_std_17)
 
-# stocks demo
+# voice demo
 add_executable(voice "demos/voice.cpp" ${KISS_SRC})              
 target_link_libraries(voice app)        
 target_compile_features(voice PRIVATE cxx_std_17)
+
+# profiler demo
+add_executable(profiler "demos/profiler.cpp")              
+target_link_libraries(profiler app)        
+target_compile_features(profiler PRIVATE cxx_std_17)
 
 ###############################################################################
 # TEST APPS
@@ -207,3 +212,6 @@ if (MSVC)
 else()
   target_compile_options(optimizations PRIVATE -lstdc++fs -mavx2 -Ofast)
 endif()
+
+add_executable(tmp "tests/tmp.cpp")              
+target_link_libraries(tmp app)        
