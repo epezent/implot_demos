@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.0.0)
 project(implot_demos VERSION 0.1.0)
 
+set(CMAKE_CXX_STANDARD 17)
+add_compile_options(-O3 -march=native)
+
 ###############################################################################
 # 3RD PARTY LIBS
 ###############################################################################
@@ -82,7 +85,11 @@ add_library(imgui ${IMGUI_HEADERS} ${IMGUI_SRC})
 if(MSVC)
   target_compile_options(imgui PRIVATE /W4 /WX /arch:AVX2 /fp:fast)
 endif()
-target_link_libraries(imgui PUBLIC glfw glad OpenGL::GL imm32)
+if(WIN32)
+  target_link_libraries(imgui PUBLIC glfw glad OpenGL::GL imm32)
+else()
+  target_link_libraries(imgui PUBLIC glfw glad OpenGL::GL)
+endif()
 target_compile_definitions(imgui PRIVATE IMGUI_DLL_EXPORT)
 
 include_directories(../imgui/ ../imgui/examples ../imgui/examples/libs/gl3w ../imgui/backends ../imgui/misc/cpp)
