@@ -774,7 +774,7 @@ struct ImPlotBench : App
         }
         else if (mode == BenchMode_LineImGui)
         {
-            GImPlot->Style.AntiAliasedLines = true;
+            // GImPlot->Style.AntiAliasedLines = true;
             for (int i = 0; i < L; ++i)
             {
                 ImGui::PushID(i);
@@ -785,7 +785,7 @@ struct ImPlotBench : App
                 }
                 ImGui::PopID();
             }
-            GImPlot->Style.AntiAliasedLines = false;
+            // GImPlot->Style.AntiAliasedLines = false;
         }
         else if (mode == BenchMode_LineNoTess)
         {
