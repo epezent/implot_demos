@@ -41,4 +41,5 @@ struct App
     ImVec4 ClearColor;                    // background clear color
     GLFWwindow* Window;                   // GLFW window handle
     std::map<std::string,ImFont*> Fonts;  // font map
+    bool UsingDGPU;                       // using discrete gpu (laptops only)
 };

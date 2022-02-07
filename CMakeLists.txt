@@ -199,19 +199,16 @@ target_compile_features(profiler PRIVATE cxx_std_17)
 # TEST APPS
 ###############################################################################
 
-add_executable(optimizations "tests/optimizations.cpp")
-target_link_libraries(optimizations app)
-target_compile_features(optimizations PRIVATE cxx_std_17)
+add_executable(benchmark "tests/benchmark.cpp")
+target_link_libraries(benchmark app)
+target_compile_features(benchmark PRIVATE cxx_std_17)
 add_custom_command(TARGET spectrogram POST_BUILD 
                    COMMAND ${CMAKE_COMMAND} -E copy_directory 
                    ${CMAKE_CURRENT_SOURCE_DIR}/resources/shaders/
                    $<TARGET_FILE_DIR:spectrogram>/shaders/)
 
 if (MSVC)
-  target_compile_options(optimizations PRIVATE /arch:AVX2 /fp:fast)
+  target_compile_options(benchmark PRIVATE /arch:AVX2 /fp:fast)
 else()
-  target_compile_options(optimizations PRIVATE -lstdc++fs -mavx2 -Ofast)
-endif()
-
-add_executable(tmp "tests/tmp.cpp")              
-target_link_libraries(tmp app)        
+  target_compile_options(benchmark PRIVATE -lstdc++fs -mavx2 -Ofast)
+endif()      
