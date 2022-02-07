@@ -41,8 +41,8 @@ namespace ImPlot
                 const float miny_pix = gp.CurrentPlot->Axes[ImAxis_Y1].PixelMin;
                 const float minx_plt = gp.CurrentPlot->Axes[ImAxis_X1].Range.Min;
                 const float miny_plt = gp.CurrentPlot->Axes[ImAxis_Y1].Range.Min;
-                const float mx = gp.CurrentPlot->Axes[ImAxis_X1].ScaleToPixel;
-                const float my = gp.CurrentPlot->Axes[ImAxis_Y1].ScaleToPixel;
+                const float mx = gp.CurrentPlot->Axes[ImAxis_X1].LinM;
+                const float my = gp.CurrentPlot->Axes[ImAxis_Y1].LinM;
 
                 ImRect cull_rect = gp.CurrentPlot->PlotRect;
                 ImPlotPoint plt = ImPlotPoint(xs[0], ys[0]);
@@ -120,8 +120,8 @@ namespace ImPlot
                 const float miny_pix = gp.CurrentPlot->Axes[ImAxis_Y1].PixelMin;
                 const float minx_plt = gp.CurrentPlot->Axes[ImAxis_X1].Range.Min;
                 const float miny_plt = gp.CurrentPlot->Axes[ImAxis_Y1].Range.Min;
-                const float mx       = gp.CurrentPlot->Axes[ImAxis_X1].ScaleToPixel;
-                const float my       = gp.CurrentPlot->Axes[ImAxis_Y1].ScaleToPixel;
+                const float mx       = gp.CurrentPlot->Axes[ImAxis_X1].LinM;
+                const float my       = gp.CurrentPlot->Axes[ImAxis_Y1].LinM;
                 // xform data
                 for (int i = 0; i < count; ++i) {
                     xs_pix[i] = minx_pix + mx * ((float)xs_plt[i] - minx_plt);

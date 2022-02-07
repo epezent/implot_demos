@@ -258,7 +258,7 @@ struct Benchmark_PlotLine : IBenchmark
     virtual void PlotInt(const char *n, int *xs, int *ys, int k) override { ImPlot::PlotLine(n, xs, ys, k); }
     virtual void PlotFloat(const char *n, float *xs, float *ys, int k) override { ImPlot::PlotLine(n, xs, ys, k); }
     virtual void PlotDouble(const char *n, double *xs, double *ys, int k) override { ImPlot::PlotLine(n, xs, ys, k); }
-    virtual void PlotImVec2(const char *n, ImVec2 *vs, int k) override { ImPlot::PlotLine(n, &vs[0].x, &vs[0].y, k, 0, 0, sizeof(ImVec2)); }
+    virtual void PlotImVec2(const char *n, ImVec2 *vs, int k) override { ImPlot::PlotLine(n, &vs[0].x, &vs[0].y, k, 0, sizeof(ImVec2)); }
 };
 
 struct Benchmark_PlotScatter : IBenchmark
@@ -282,7 +282,7 @@ struct Benchmark_PlotScatter : IBenchmark
     virtual void PlotImVec2(const char *n, ImVec2 *vs, int k) override
     {
         ImPlot::SetNextMarkerStyle(ImPlotMarker_Square, 2);
-        ImPlot::PlotScatter(n, &vs[0].x, &vs[0].y, k, 0, 0, sizeof(ImVec2));
+        ImPlot::PlotScatter(n, &vs[0].x, &vs[0].y, k, 0, sizeof(ImVec2));
     }
 };
 
@@ -292,7 +292,7 @@ struct Benchmark_PlotBars : IBenchmark
     virtual void PlotInt(const char *n, int *xs, int *ys, int k) override { ImPlot::PlotBars(n, xs, ys, k, 1); }
     virtual void PlotFloat(const char *n, float *xs, float *ys, int k) override { ImPlot::PlotBars(n, xs, ys, k, 1); }
     virtual void PlotDouble(const char *n, double *xs, double *ys, int k) override { ImPlot::PlotBars(n, xs, ys, k, 1); }
-    virtual void PlotImVec2(const char *n, ImVec2 *vs, int k) override { ImPlot::PlotBars(n, &vs[0].x, &vs[0].y, k, 1, 0, 0, sizeof(ImVec2)); }
+    virtual void PlotImVec2(const char *n, ImVec2 *vs, int k) override { ImPlot::PlotBars(n, &vs[0].x, &vs[0].y, k, 1, 0, sizeof(ImVec2)); }
 };
 
 struct Benchmark_PlotShaded : IBenchmark
@@ -301,7 +301,7 @@ struct Benchmark_PlotShaded : IBenchmark
     virtual void PlotInt(const char *n, int *xs, int *ys, int k) override { ImPlot::PlotShaded(n, xs, ys, k); }
     virtual void PlotFloat(const char *n, float *xs, float *ys, int k) override { ImPlot::PlotShaded(n, xs, ys, k); }
     virtual void PlotDouble(const char *n, double *xs, double *ys, int k) override { ImPlot::PlotShaded(n, xs, ys, k); }
-    virtual void PlotImVec2(const char *n, ImVec2 *vs, int k) override { ImPlot::PlotShaded(n, &vs[0].x, &vs[0].y, k, 0, 0, sizeof(ImVec2)); }
+    virtual void PlotImVec2(const char *n, ImVec2 *vs, int k) override { ImPlot::PlotShaded(n, &vs[0].x, &vs[0].y, k, 0, sizeof(ImVec2)); }
 };
 
 struct Benchmark_PlotLineInline : IBenchmark
@@ -648,7 +648,7 @@ struct ImPlotBench : App
                         {
                             if (show_fit)
                             {
-                                ImPlot::PlotLine(name, &record.Call_Fit[0].x, &record.Call_Fit[0].y, 2, 0, 0, sizeof(ImVec2));
+                                ImPlot::PlotLine(name, &record.Call_Fit[0].x, &record.Call_Fit[0].y, 2, 0, sizeof(ImVec2));
                             }
                             if (show_data)
                             {
@@ -661,7 +661,7 @@ struct ImPlotBench : App
                             if (show_fit)
                             {
                                 ImPlot::SetNextLineStyle(IMPLOT_AUTO_COL, 2.0f);
-                                ImPlot::PlotLine(name, &record.Frame_Fit[0].x, &record.Frame_Fit[0].y, 2, 0, 0, sizeof(ImVec2));
+                                ImPlot::PlotLine(name, &record.Frame_Fit[0].x, &record.Frame_Fit[0].y, 2, 0, sizeof(ImVec2));
                             }
                             if (show_data)
                             {

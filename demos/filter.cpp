@@ -168,7 +168,7 @@ struct ImFilter : public App {
                     ImPlot::SetupAxesLimits(1,500,-100,10);
                     ImPlot::SetupAxes("Frequency [Hz]","Magnitude [dB]",ImPlotAxisFlags_LogScale);
                     ImPlot::SetNextLineStyle({1,1,1,1});
-                    ImPlot::PlotInfLines("##3dB",&co,1,ImPlotInfLinesFlags_Horizontal);
+                    // ImPlot::PlotInfLines("##3dB",&co,1,ImPlotInfLinesFlags_Horizontal);
                     ImPlot::SetNextFillStyle(IMPLOT_AUTO_COL, 0.250f);
                     ImPlot::PlotShaded("##Mag1",result.f.data(),result.mag.data(),(int)result.f.size(),-INFINITY);
                     ImPlot::PlotLine("##Mag2",result.f.data(),result.mag.data(),(int)result.f.size());
