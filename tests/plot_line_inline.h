@@ -170,3 +170,106 @@ namespace ImPlot
         }
     }
 }
+
+/*
+#include <vector>
+#include <xmmintrin.h>
+
+#if defined __SSE__ || defined __x86_64__ || defined _M_X64
+static inline float ImInvSqrt(float x) { return _mm_cvtss_f32(_mm_rsqrt_ss(_mm_set_ss(x))); }
+#else
+static inline float ImInvSqrt(float x) { return 1.0f / sqrtf(x); }
+#endif
+
+#define IMPLOT_NORMALIZE2F_OVER_ZERO(VX, VY) \
+    do                                       \
+    {                                        \
+        float d2 = VX * VX + VY * VY;        \
+        if (d2 > 0.0f)                       \
+        {                                    \
+            float inv_len = ImInvSqrt(d2);   \
+            VX *= inv_len;                   \
+            VY *= inv_len;                   \
+        }                                    \
+    } while (0)
+
+struct ImVec2 {
+    float x;
+    float y;
+};
+
+struct ImDrawVert
+{
+    ImVec2  pos;
+    ImVec2  uv;
+    unsigned int   col;
+};
+
+struct ImDrawList
+{
+    std::vector<unsigned int>     IdxBuffer;          // Index buffer. Each command consume ImDrawCmd::ElemCount of those
+    std::vector<ImDrawVert>    VtxBuffer;          // Vertex buffer.
+    unsigned int            _VtxCurrentIdx;     // [Internal] generally == VtxBuffer.Size unless we are past 64K vertices, in which case this gets reset to 0.
+    ImDrawVert*             _VtxWritePtr;       // [Internal] point within VtxBuffer.Data after each add command (to avoid using the ImVector<> operators too much)
+    unsigned int*              _IdxWritePtr;       // [Internal] point within IdxBuffer.Data after each add command (to avoid using the ImVector<> operators too much)
+};
+
+void Test(ImDrawList& DrawList, const double *xs, const double *ys, int count) {
+
+    static std::vector<double> xs_plt; xs_plt.resize(count);
+    static std::vector<double> ys_plt; ys_plt.resize(count);
+    static std::vector<float>  xs_pix; xs_pix.resize(count);  
+    static std::vector<float>  ys_pix; ys_pix.resize(count);
+
+    const float minx_pix = 100;
+    const float miny_pix = 100;
+    const float minx_plt = 0;
+    const float miny_plt = 0;
+    const float mx = 100;
+    const float my = 100;
+
+    const unsigned int prims = count - 1;
+    const float weight = 1.0f;
+
+    ImVec2 uv = {0,0};
+    unsigned int col = 1;
+
+    for (unsigned int i = 0; i < prims; ++i)
+    {
+        const float x1 = xs_pix[i];
+        const float x2 = xs_pix[i+1];
+        const float y1 = ys_pix[i];
+        const float y2 = ys_pix[i+1];
+        float dx = x2 - x1;
+        float dy = y2 - y1;
+        IMPLOT_NORMALIZE2F_OVER_ZERO(dx, dy);
+        dx *= (weight * 0.5f);
+        dy *= (weight * 0.5f);
+        DrawList._VtxWritePtr[0].pos.x = x1 + dy;
+        DrawList._VtxWritePtr[0].pos.y = y1 - dx;
+        DrawList._VtxWritePtr[0].uv = uv;
+        DrawList._VtxWritePtr[0].col = col;
+        DrawList._VtxWritePtr[1].pos.x = x2 + dy;
+        DrawList._VtxWritePtr[1].pos.y = y2 - dx;
+        DrawList._VtxWritePtr[1].uv = uv;
+        DrawList._VtxWritePtr[1].col = col;
+        DrawList._VtxWritePtr[2].pos.x = x2 - dy;
+        DrawList._VtxWritePtr[2].pos.y = y2 + dx;
+        DrawList._VtxWritePtr[2].uv = uv;
+        DrawList._VtxWritePtr[2].col = col;
+        DrawList._VtxWritePtr[3].pos.x = x1 - dy;
+        DrawList._VtxWritePtr[3].pos.y = y1 + dx;
+        DrawList._VtxWritePtr[3].uv = uv;
+        DrawList._VtxWritePtr[3].col = col;
+        DrawList._VtxWritePtr += 4;
+        DrawList._IdxWritePtr[0] = (unsigned int)(DrawList._VtxCurrentIdx);
+        DrawList._IdxWritePtr[1] = (unsigned int)(DrawList._VtxCurrentIdx + 1);
+        DrawList._IdxWritePtr[2] = (unsigned int)(DrawList._VtxCurrentIdx + 2);
+        DrawList._IdxWritePtr[3] = (unsigned int)(DrawList._VtxCurrentIdx);
+        DrawList._IdxWritePtr[4] = (unsigned int)(DrawList._VtxCurrentIdx + 2);
+        DrawList._IdxWritePtr[5] = (unsigned int)(DrawList._VtxCurrentIdx + 3);
+        DrawList._IdxWritePtr += 6;
+        DrawList._VtxCurrentIdx += 4;
+    }
+}
+*/
