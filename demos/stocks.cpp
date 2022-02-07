@@ -341,7 +341,6 @@ struct ImStocks : App
         ImGui::SameLine();
         ImGui::Text("FPS: %.2f", ImGui::GetIO().Framerate);
 
-
         if (ImGui::BeginTabBar("TickerTabs")) {
             for (auto& pair : m_ticker_data) {
                 auto& data = pair.second;

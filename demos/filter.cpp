@@ -65,7 +65,7 @@ struct ImFilter : public App {
         // gui inputs
         static bool signal_need_update = true;
         static bool etfe_need_update   = true;
-        static bool filt_need_upate    = true;
+        static bool filt_need_update    = true;
 
         ImGui::SetNextWindowPos(ImVec2(0,0), ImGuiCond_Always);
         ImGui::SetNextWindowSize(GetWindowSize(), ImGuiCond_Always);
@@ -83,13 +83,13 @@ struct ImFilter : public App {
 
         ImGui::Combo("Filter Type", &filter,"LowPass\0HighPass\0BandPass\0BandStop\0");
         if (filter > 1) {
-            if (ImGui::SliderDouble2("Filter Center/Width, Fc/Fw",Fc,1,499,"%.0f Hz") || filt_need_upate) {
+            if (ImGui::SliderDouble2("Filter Center/Width, Fc/Fw",Fc,1,499,"%.0f Hz") || filt_need_update) {
                 butt2bp.setup(Fs,Fc[0],Fc[1]);
                 butt2bs.setup(Fs,Fc[0],Fc[1]);
             }
         }
         else {
-            if (ImGui::SliderDouble("Filter Cutoff, Fc",Fc,1,499,"%.0f Hz") || filt_need_upate) {
+            if (ImGui::SliderDouble("Filter Cutoff, Fc",Fc,1,499,"%.0f Hz") || filt_need_update) {
                 butt2lp.setup(Fs,Fc[0]);
                 butt2hp.setup(Fs,Fc[0]);
             }
@@ -168,13 +168,13 @@ struct ImFilter : public App {
                     ImPlot::SetupAxesLimits(1,500,-100,10);
                     ImPlot::SetupAxes("Frequency [Hz]","Magnitude [dB]",ImPlotAxisFlags_LogScale);
                     ImPlot::SetNextLineStyle({1,1,1,1});
-                    ImPlot::PlotHLines("##3dB",&co,1);
+                    ImPlot::PlotInfLines("##3dB",&co,1,ImPlotInfLinesFlags_Horizontal);
                     ImPlot::SetNextFillStyle(IMPLOT_AUTO_COL, 0.250f);
                     ImPlot::PlotShaded("##Mag1",result.f.data(),result.mag.data(),(int)result.f.size(),-INFINITY);
                     ImPlot::PlotLine("##Mag2",result.f.data(),result.mag.data(),(int)result.f.size());
                     ImPlot::Annotation(Fc[0],-3,ImVec4(0.15f,0.15f,0.15f,1),ImVec2(5,-5),true,"Half-Power Point");
                     if (ImPlot::DragLineX(148884,&Fc[0],ImVec4(0.15f,0.15f,0.15f,1)))
-                        filt_need_upate = true;
+                        filt_need_update = true;
                     ImPlot::EndPlot();
                 }
                 ImGui::EndTabItem();
@@ -187,7 +187,7 @@ struct ImFilter : public App {
                     ImPlot::PlotShaded("##Phase1",result.f.data(),result.phase.data(),(int)result.f.size(),-INFINITY);
                     ImPlot::PlotLine("##Phase2",result.f.data(),result.phase.data(),(int)result.f.size());
                     if (ImPlot::DragLineX(439829,&Fc[0],ImVec4(0.15f,0.15f,0.15f,1)))
-                        filt_need_upate = true;
+                        filt_need_update = true;
                     ImPlot::EndPlot();
                 }
                 ImGui::EndTabItem();
@@ -204,7 +204,7 @@ struct ImFilter : public App {
                     ImPlot::PlotShaded("y(f)",result.f.data(),result.ampy.data(),(int)result.f.size(),-INFINITY);
                     ImPlot::PlotLine("y(f)",result.f.data(),result.ampy.data(),(int)result.f.size());
                     if (ImPlot::DragLineX(397391,&Fc[0],ImVec4(0.15f,0.15f,0.15f,1)))
-                        filt_need_upate = true;
+                        filt_need_update = true;
 
                     if (ImPlot::DragLineY(939031,&a[0],ImVec4(0.15f,0.15f,0.15f,1)))
                         signal_need_update = true;                    
