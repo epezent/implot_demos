@@ -721,26 +721,54 @@ struct ImPlotBench : App
         if (numPlots == 0)
             return;
 
-        int rows = IM_ROUND(ImSqrt(numPlots));
-        int cols = (numPlots / rows) * rows >= numPlots ? (numPlots / rows) : (numPlots / rows) + 1;
-        if (ImPlot::BeginSubplots("##Comp",rows,cols,ImVec2(-1,-1),ImPlotSubplotFlags_NoResize)) {
-            for (auto& bench : bench_union) {
-                if (ImPlot::BeginPlot(bench.c_str(), ImVec2(0,0), ImPlotFlags_NoLegend)) {
-                    ImPlot::SetupAxis(ImAxis_X1, "##X", ImPlotAxisFlags_NoTickLabels|ImPlotAxisFlags_NoGridLines|ImPlotAxisFlags_NoTickMarks);  
-                    ImPlot::SetupAxisLimits(ImAxis_X1,-0.5,1.5f,ImPlotCond_Always);
-                    ImPlot::SetupAxis(ImAxis_Y1, "Items / ms",ImPlotAxisFlags_AutoFit);                    
-                    float v[2];
-                    v[0] = 1.0 / m_records[branchL][bench].Records[0].Call_M; 
-                    v[1] = 1.0 / m_records[branchR][bench].Records[0].Call_M;
+        static std::vector<float> bar;
+        static std::vector<const char*> labels;
+        static const char* branchLabels[2];
+        static double positions[2] = {0, 1};
+        bar.resize(numPlots*2);
+        labels.resize(numPlots);
 
-                    ImPlot::SetNextFillStyle(m_records[branchL][bench].Col);
-                    ImPlot::PlotBars("##Item",v,2);
+        branchLabels[0] = branchL.c_str();
+        branchLabels[1] = branchR.c_str();
 
-                    ImPlot::EndPlot();
-                }
-            }
-            ImPlot::EndSubplots();
+        for (int i = 0; i < numPlots*2; i+=2) {
+            auto& bench = bench_union[i/2];
+            bar[i]   = ImSum(m_records[branchL][bench].Records[0].Call.data(), m_records[branchL][bench].Records[0].Call.size());
+            bar[i+1] = ImSum(m_records[branchR][bench].Records[0].Call.data(), m_records[branchR][bench].Records[0].Call.size());
+            labels[i/2] = bench.c_str();
         }
+
+        int groups = 2;     
+
+        if (ImPlot::BeginPlot("##Comp",ImVec2(-1,-1))) {
+            ImPlot::SetupAxis(ImAxis_X1, "##Bars", ImPlotAxisFlags_NoGridLines|ImPlotAxisFlags_NoTickMarks);
+            ImPlot::SetupAxisTicks(ImAxis_X1, 0, 1, 2, branchLabels);
+            ImPlot::SetupAxis(ImAxis_Y1, "Total Time [ms]",ImPlotAxisFlags_AutoFit);                   
+            ImPlot::PlotBarGroups(labels.data(), bar.data(), numPlots, 2);
+            ImPlot::EndPlot();
+        }
+
+        // int rows = IM_ROUND(ImSqrt(numPlots));
+        // int cols = (numPlots / rows) * rows >= numPlots ? (numPlots / rows) : (numPlots / rows) + 1;
+        // if (ImPlot::BeginSubplots("##Comp",rows,cols,ImVec2(-1,-1),ImPlotSubplotFlags_NoResize)) {
+        //     for (auto& bench : bench_union) {
+        //         if (ImPlot::BeginPlot(bench.c_str(), ImVec2(0,0), ImPlotFlags_NoLegend)) {
+        //             ImPlot::SetupAxis(ImAxis_X1, "##X", ImPlotAxisFlags_NoTickLabels|ImPlotAxisFlags_NoGridLines|ImPlotAxisFlags_NoTickMarks);  
+        //             ImPlot::SetupAxisLimits(ImAxis_X1,-0.5,1.5f,ImPlotCond_Always);
+        //             ImPlot::SetupAxis(ImAxis_Y1, "Total Time [ms]",ImPlotAxisFlags_AutoFit);                    
+        //             float v[2];
+        //             v[0] = ImSum(m_records[branchL][bench].Records[0].Call.data(), m_records[branchL][bench].Records[0].Call.size());
+        //             v[1] = ImSum(m_records[branchR][bench].Records[0].Call.data(), m_records[branchR][bench].Records[0].Call.size());
+        //             ImPlot::SetNextFillStyle(m_records[branchL][bench].Col);
+        //             ImPlot::PlotBars("##Item",v,2);
+        //             ImPlot::EndPlot();
+        //         }
+        //     }
+        //     ImPlot::EndSubplots();
+        // }
+
+
+
 
     }
 };
