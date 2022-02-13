@@ -65,30 +65,35 @@ enum BenchmarkType
     BenchmarkType_Float,
     BenchmarkType_Double,
     BenchmarkType_ImVec2,
+    BenchmarkType_ImPlotPoint,
     BenchmarkType_COUNT
 };
 
-static const char *BenchmarkType_Names[] = {"int", "float", "double", "ImVec2"};
-static const char *BenchmarkType_Letter[] = {"i","f","d","v"};
+static const char *BenchmarkType_Names[] = {"int", "float", "double", "ImVec2", "ImPlotPoint"};
+static const char *BenchmarkType_Letter[] = {"i", "f", "d", "v", "p"};
 
 static constexpr int kMaxFrames = 60;
-static constexpr int kMaxElems = 2000;
-static constexpr int kMaxItems = 250;
-static constexpr int kAddItems = 10;
+static constexpr int kMaxElems = 500000;
+static constexpr int kMaxElemsItem = 5000; // 5000 1000 500  100
+static constexpr int kDataNoise = 2500;
+static constexpr int kMaxSteps = 10;
+
+static const int kElemValues[] = {100, 500, 1000, 5000};
+static const char *kElemsStrings[] = {"100", "500", "1000", "5000"};
 
 template <typename T>
 struct BenchmarkDataScalar
 {
-    BenchmarkDataScalar(int size = kMaxElems) : Col(RandomColor(0.5f)),
-                                                Size(size)
+    BenchmarkDataScalar()
     {
-        float y = RandomRange<float>(2000, 998000);
-        Xs = new T[Size];
-        Ys = new T[Size];
-        for (int i = 0; i < Size; ++i)
-        {
-            Xs[i] = static_cast<T>(i);
-            Ys[i] = static_cast<T>(y + RandomRange<float>(-2000, 2000));
+        Xs = new T[kMaxElems];
+        Ys = new T[kMaxElems];
+        for (int i = 0; i < kMaxElems; i += kMaxElemsItem) {
+            for (int j = 0; j < kMaxElemsItem; ++j)
+            {
+                Xs[i+j] = static_cast<T>(j);
+                Ys[i+j] = static_cast<T>(kMaxElems - i + RandomRange<float>(-kDataNoise, kDataNoise));
+            }
         }
     }
     ~BenchmarkDataScalar()
@@ -96,8 +101,6 @@ struct BenchmarkDataScalar
         delete[] Xs;
         delete[] Ys;
     }
-    const ImVec4 Col;
-    const int Size;
     T *Xs;
     T *Ys;
 };
@@ -109,20 +112,16 @@ typedef BenchmarkDataScalar<double> BenchmarkDataDouble;
 template <typename T>
 struct BenchmarkDataVector
 {
-    BenchmarkDataVector(int size = kMaxElems) : Col(RandomRange(0.0f, 1.0f), RandomRange(0.0f, 1.0f), RandomRange(0.0f, 1.0f), 0.5f),
-                                                Size(size)
+    BenchmarkDataVector()
     {
-        float y = RandomRange<float>(2000, 998000);
-        Vs = new T[Size];
-        for (int i = 0; i < Size; ++i)
+        Vs = new T[kMaxElems];
+        for (int i = 0; i < kMaxElems; ++i)
         {
-            Vs[i].x = i;
-            Vs[i].y = y + RandomRange<float>(-2000, 2000);
+            Vs[i].x = RandomRange<float>(0.0f, (float)kMaxElems);
+            Vs[i].y = RandomRange<float>(0.0f, (float)kMaxElems);
         }
     }
     ~BenchmarkDataVector() { delete[] Vs; }
-    const ImVec4 Col;
-    const int Size;
     T *Vs;
 };
 
@@ -131,27 +130,26 @@ typedef BenchmarkDataVector<ImPlotPoint> BenchmarkDataImPlotPoint;
 
 struct BenchmarkRecord
 {
-    BenchmarkRecord() {}
-    BenchmarkRecord(int n)
+    BenchmarkRecord()
     {
-        Items.reserve(n);
-        Call.reserve(n);
-        Frame.reserve(n);
-        Fps.reserve(n);
+        Elems.reserve(kMaxSteps + 1);
+        Call.reserve(kMaxSteps + 1);
+        Frame.reserve(kMaxSteps + 1);
+        Fps.reserve(kMaxSteps + 1);
     }
-    void AddRecord(int items, float call, float frame, float fps)
+    void AddRecord(int elems, float call, float frame, float fps)
     {
-        Items.push_back((float)items);
+        Elems.push_back((float)elems);
         Call.push_back(call);
         Frame.push_back(frame);
         Fps.push_back(fps);
     }
     void FitData()
     {
-        MakeFitLine(Items.data(), Call.data(), Items.size(), Call_Fit, &Call_M, &Call_B);
-        MakeFitLine(Items.data(), Frame.data(), Items.size(), Frame_Fit, &Frame_M, &Frame_B);
+        MakeFitLine(Elems.data(), Call.data(), Elems.size(), Call_Fit, &Call_M, &Call_B);
+        MakeFitLine(Elems.data(), Frame.data(), Elems.size(), Frame_Fit, &Frame_M, &Frame_B);
     }
-    std::vector<float> Items;
+    std::vector<float> Elems;
     std::vector<float> Call;
     ImVec2 Call_Fit[2];
     float Call_M = 0;
@@ -166,8 +164,10 @@ struct BenchmarkRecord
 struct BenchmarkRecordCollection
 {
     BenchmarkRecordCollection() : Col(RandomColor())
-    { }
-    void SetColorFromString(std::string& name) {
+    {
+    }
+    void SetColorFromString(std::string &name)
+    {
         Col = ImGui::ColorConvertU32ToFloat4(ImHashStr(name.c_str()));
         Col.w = 1.0f;
         ImGui::ColorConvertRGBtoHSV(Col.x, Col.y, Col.z, Col.x, Col.y, Col.z);
@@ -182,65 +182,94 @@ using json = nlohmann::json;
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ImVec2, x, y);
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ImVec4, x, y, z, w);
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(BenchmarkRecord, Items, Call, Call_Fit, Call_M, Call_B, Frame, Frame_Fit, Frame_M, Frame_B, Fps);
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(BenchmarkRecord, Elems, Call, Call_Fit, Call_M, Call_B, Frame, Frame_Fit, Frame_M, Frame_B, Fps);
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(BenchmarkRecordCollection, Col, Records);
 
 struct IBenchmark
 {
     IBenchmark(std::string name) : name(name) {}
     virtual ~IBenchmark() {}
-    void RunInt(const BenchmarkDataInt *data, int iterations, int32_t &call_time)
+    void RunInt(const BenchmarkDataInt &data, int items, int elems, int32_t &call_time)
     {
-        for (int i = 0; i < iterations; ++i)
+        srand(0);
+        for (int i = 0; i < items; ++i)
         {
+            int e = i * elems;
+            auto Col = RandomColor(0.5f);
             ImGui::PushID(i);
             {
                 ScopedProfiler prof(call_time);
-                ImPlot::SetNextLineStyle(data[i].Col);
-                ImPlot::SetNextFillStyle(data[i].Col);
-                PlotInt("##item", data[i].Xs, data[i].Ys, data[i].Size);
+                ImPlot::SetNextLineStyle(Col);
+                ImPlot::SetNextFillStyle(Col);
+                PlotInt("##item", &data.Xs[e], &data.Ys[e], elems);
             }
             ImGui::PopID();
         }
     }
-    void RunFloat(const BenchmarkDataFloat *data, int iterations, int32_t &call_time)
+    void RunFloat(const BenchmarkDataFloat &data, int items, int elems, int32_t &call_time)
     {
-        for (int i = 0; i < iterations; ++i)
+        srand(0);
+        for (int i = 0; i < items; ++i)
         {
+            int e = i * elems;
+            auto Col = RandomColor(0.5f);
             ImGui::PushID(i);
             {
                 ScopedProfiler prof(call_time);
-                ImPlot::SetNextLineStyle(data[i].Col);
-                ImPlot::SetNextFillStyle(data[i].Col);
-                PlotFloat("##item", data[i].Xs, data[i].Ys, data[i].Size);
+                ImPlot::SetNextLineStyle(Col);
+                ImPlot::SetNextFillStyle(Col);
+                PlotFloat("##item", &data.Xs[e], &data.Ys[e], elems);
             }
             ImGui::PopID();
         }
     }
-    void RunDouble(const BenchmarkDataDouble *data, int iterations, int32_t &call_time)
+    void RunDouble(const BenchmarkDataDouble &data, int items, int elems, int32_t &call_time)
     {
-        for (int i = 0; i < iterations; ++i)
+        srand(0);
+        for (int i = 0; i < items; ++i)
         {
+            int e = i * elems;
+            auto Col = RandomColor(0.5f);
             ImGui::PushID(i);
             {
                 ScopedProfiler prof(call_time);
-                ImPlot::SetNextLineStyle(data[i].Col);
-                ImPlot::SetNextFillStyle(data[i].Col);
-                PlotDouble("##item", data[i].Xs, data[i].Ys, data[i].Size);
+                ImPlot::SetNextLineStyle(Col);
+                ImPlot::SetNextFillStyle(Col);
+                PlotDouble("##item", &data.Xs[e], &data.Ys[e], elems);
             }
             ImGui::PopID();
         }
     }
-    void RunImVec2(const BenchmarkDataImVec2 *data, int iterations, int32_t &call_time)
+    void RunImVec2(const BenchmarkDataImVec2 &data, int items, int elems, int32_t &call_time)
     {
-        for (int i = 0; i < iterations; ++i)
+        srand(0);
+        for (int i = 0; i < items; ++i)
         {
+            int e = i * elems;
+            auto Col = RandomColor(0.5f);
             ImGui::PushID(i);
             {
                 ScopedProfiler prof(call_time);
-                ImPlot::SetNextLineStyle(data[i].Col);
-                ImPlot::SetNextFillStyle(data[i].Col);
-                PlotImVec2("##item", data[i].Vs, data[i].Size);
+                ImPlot::SetNextLineStyle(Col);
+                ImPlot::SetNextFillStyle(Col);
+                PlotImVec2("##item", &data.Vs[e], elems);
+            }
+            ImGui::PopID();
+        }
+    }
+    void RunImPlotPoint(const BenchmarkDataImPlotPoint &data, int items, int elems, int32_t &call_time)
+    {
+        srand(0);
+        for (int i = 0; i < items; ++i)
+        {
+            int e = i * elems;
+            auto Col = RandomColor(0.5f);
+            ImGui::PushID(i);
+            {
+                ScopedProfiler prof(call_time);
+                ImPlot::SetNextLineStyle(Col);
+                ImPlot::SetNextFillStyle(Col);
+                PlotImPlotPoint("##item", &data.Vs[e], elems);
             }
             ImGui::PopID();
         }
@@ -249,6 +278,7 @@ struct IBenchmark
     virtual void PlotFloat(const char *name, float *xs, float *ys, int count) = 0;
     virtual void PlotDouble(const char *name, double *xs, double *ys, int count) = 0;
     virtual void PlotImVec2(const char *name, ImVec2 *vs, int count) = 0;
+    virtual void PlotImPlotPoint(const char *name, ImPlotPoint *vs, int count) = 0;
     const std::string name;
 };
 
@@ -259,6 +289,7 @@ struct Benchmark_PlotLine : IBenchmark
     virtual void PlotFloat(const char *n, float *xs, float *ys, int k) override { ImPlot::PlotLine(n, xs, ys, k); }
     virtual void PlotDouble(const char *n, double *xs, double *ys, int k) override { ImPlot::PlotLine(n, xs, ys, k); }
     virtual void PlotImVec2(const char *n, ImVec2 *vs, int k) override { ImPlot::PlotLine(n, &vs[0].x, &vs[0].y, k, 0, sizeof(ImVec2)); }
+    virtual void PlotImPlotPoint(const char *n, ImPlotPoint *vs, int k) override { ImPlot::PlotLine(n, &vs[0].x, &vs[0].y, k, 0, sizeof(ImPlotPoint)); }
 };
 
 struct Benchmark_PlotScatter : IBenchmark
@@ -284,15 +315,21 @@ struct Benchmark_PlotScatter : IBenchmark
         ImPlot::SetNextMarkerStyle(ImPlotMarker_Square, 2);
         ImPlot::PlotScatter(n, &vs[0].x, &vs[0].y, k, 0, sizeof(ImVec2));
     }
+    virtual void PlotImPlotPoint(const char *n, ImPlotPoint *vs, int k) override
+    {
+        ImPlot::SetNextMarkerStyle(ImPlotMarker_Square, 2);
+        ImPlot::PlotScatter(n, &vs[0].x, &vs[0].y, k, 0, sizeof(ImPlotPoint));
+    }
 };
 
 struct Benchmark_PlotBars : IBenchmark
 {
     Benchmark_PlotBars() : IBenchmark("Bars") {}
-    virtual void PlotInt(const char *n, int *xs, int *ys, int k) override { ImPlot::PlotBars(n, xs, ys, k, 1); }
-    virtual void PlotFloat(const char *n, float *xs, float *ys, int k) override { ImPlot::PlotBars(n, xs, ys, k, 1); }
-    virtual void PlotDouble(const char *n, double *xs, double *ys, int k) override { ImPlot::PlotBars(n, xs, ys, k, 1); }
-    virtual void PlotImVec2(const char *n, ImVec2 *vs, int k) override { ImPlot::PlotBars(n, &vs[0].x, &vs[0].y, k, 1, 0, sizeof(ImVec2)); }
+    virtual void PlotInt(const char *n, int *xs, int *ys, int k) override { ImPlot::PlotBars(n, xs, ys, k, 0.8); }
+    virtual void PlotFloat(const char *n, float *xs, float *ys, int k) override { ImPlot::PlotBars(n, xs, ys, k, 0.8); }
+    virtual void PlotDouble(const char *n, double *xs, double *ys, int k) override { ImPlot::PlotBars(n, xs, ys, k, 0.8); }
+    virtual void PlotImVec2(const char *n, ImVec2 *vs, int k) override { ImPlot::PlotBars(n, &vs[0].x, &vs[0].y, k, 0.8, 0, sizeof(ImVec2)); }
+    virtual void PlotImPlotPoint(const char *n, ImPlotPoint *vs, int k) override { ImPlot::PlotBars(n, &vs[0].x, &vs[0].y, k, 0.8, 0, sizeof(ImPlotPoint)); }
 };
 
 struct Benchmark_PlotShaded : IBenchmark
@@ -301,7 +338,8 @@ struct Benchmark_PlotShaded : IBenchmark
     virtual void PlotInt(const char *n, int *xs, int *ys, int k) override { ImPlot::PlotShaded(n, xs, ys, k); }
     virtual void PlotFloat(const char *n, float *xs, float *ys, int k) override { ImPlot::PlotShaded(n, xs, ys, k); }
     virtual void PlotDouble(const char *n, double *xs, double *ys, int k) override { ImPlot::PlotShaded(n, xs, ys, k); }
-    virtual void PlotImVec2(const char *n, ImVec2 *vs, int k) override { ImPlot::PlotShaded(n, &vs[0].x, &vs[0].y, k, 0, sizeof(ImVec2)); }
+    virtual void PlotImVec2(const char *n, ImVec2 *vs, int k) override { ImPlot::PlotShaded(n, &vs[0].x, &vs[0].y, k, 0, 0, sizeof(ImVec2)); }
+    virtual void PlotImPlotPoint(const char *n, ImPlotPoint *vs, int k) override { ImPlot::PlotShaded(n, &vs[0].x, &vs[0].y, k, 0, sizeof(ImPlotPoint)); }
 };
 
 struct Benchmark_PlotLineInline : IBenchmark
@@ -311,6 +349,7 @@ struct Benchmark_PlotLineInline : IBenchmark
     virtual void PlotFloat(const char *n, float *xs, float *ys, int k) override { ImPlot::PlotLineInline(n, xs, ys, k); }
     virtual void PlotDouble(const char *n, double *xs, double *ys, int k) override { ImPlot::PlotLineInline(n, xs, ys, k); }
     virtual void PlotImVec2(const char *n, ImVec2 *vs, int k) override {}
+    virtual void PlotImPlotPoint(const char *n, ImPlotPoint *vs, int k) override {}
 };
 
 struct Benchmark_PlotLineStaged : IBenchmark
@@ -320,13 +359,13 @@ struct Benchmark_PlotLineStaged : IBenchmark
     virtual void PlotFloat(const char *n, float *xs, float *ys, int k) override { ImPlot::PlotLineStaged(n, xs, ys, k); }
     virtual void PlotDouble(const char *n, double *xs, double *ys, int k) override { ImPlot::PlotLineStaged(n, xs, ys, k); }
     virtual void PlotImVec2(const char *n, ImVec2 *vs, int k) override {}
+    virtual void PlotImPlotPoint(const char *n, ImPlotPoint *vs, int k) override {}
 };
 
 struct BenchmarkRun
 {
     int benchmark;
     int type;
-    int items;
     int elems;
     std::string name;
 };
@@ -339,10 +378,11 @@ struct ImPlotBench : App
     std::string m_branch;
     std::vector<std::unique_ptr<IBenchmark>> m_benchmarks;
 
-    BenchmarkDataInt m_items_int[kMaxItems];
-    BenchmarkDataFloat m_items_float[kMaxItems];
-    BenchmarkDataDouble m_items_double[kMaxItems];
-    BenchmarkDataImVec2 m_items_imvec2[kMaxItems];
+    BenchmarkDataInt m_items_int;
+    BenchmarkDataFloat m_items_float;
+    BenchmarkDataDouble m_items_double;
+    BenchmarkDataImVec2 m_items_imvec2;
+    BenchmarkDataImPlotPoint m_items_implot;
 
     BenchmarkQueue m_queue;
     std::map<std::string, BenchmarkQueue> m_queues;
@@ -355,14 +395,14 @@ struct ImPlotBench : App
     {
         json j;
         j["records"] = m_records;
-        std::ofstream file("bench.json");
+        std::ofstream file("benchmark.json");
         if (file.is_open())
             file << std::setw(4) << j;
     }
 
     void Start() override
     {
-        std::ifstream file("bench.json");
+        std::ifstream file("benchmark.json");
         if (file.is_open())
         {
             json j;
@@ -380,17 +420,17 @@ struct ImPlotBench : App
         m_benchmarks.push_back(std::make_unique<Benchmark_PlotLineStaged>());
 
         m_queues["All Plots"] = {
-            {0, BenchmarkType_Float, 250, 2000},
-            {1, BenchmarkType_Float, 250, 2000},
-            {2, BenchmarkType_Float, 250, 2000},
-            {3, BenchmarkType_Float, 250, 2000},
+            {0, BenchmarkType_Float, 2},
+            {1, BenchmarkType_Float, 2},
+            {2, BenchmarkType_Float, 2},
+            {3, BenchmarkType_Float, 2},
         };
 
         m_queues["All Types"] = {
-            {0, BenchmarkType_Int, 250, 2000},
-            {0, BenchmarkType_Float, 250, 2000},
-            {0, BenchmarkType_Double, 250, 2000},
-            {0, BenchmarkType_ImVec2, 250, 2000},
+            {0, BenchmarkType_Int, 2},
+            {0, BenchmarkType_Float, 2},
+            {0, BenchmarkType_Double, 2},
+            {0, BenchmarkType_ImVec2, 2},
         };
     }
 
@@ -411,7 +451,8 @@ struct ImPlotBench : App
                 ShowResultsTool();
                 ImGui::EndTabItem();
             }
-            if (ImGui::BeginTabItem("Compare")) {
+            if (ImGui::BeginTabItem("Compare"))
+            {
                 ShowCompareTool();
                 ImGui::EndTabItem();
             }
@@ -423,20 +464,14 @@ struct ImPlotBench : App
 
     void ShowBenchmarkTool()
     {
-        static int current_items = 0;
-        static int current_frame = 0;
-
-        static int selected_bench = 0;
-        static int selected_type = BenchmarkType_Float;
-        static int tcall = 0;
-        static double t1 = 0;
-        static double t2 = 0;
-        static bool running = false;
+        static int selected_bench_idx = 0; // PlotLine
+        static int selected_type_idx = BenchmarkType_Float;
+        static int selected_elems_idx = 2; // 1000
 
         auto GetRunName = [&]()
         {
-            auto str = m_benchmarks[selected_bench]->name + "_" + BenchmarkType_Names[selected_type];
-            if (this->UsingDGPU)   
+            auto str = m_benchmarks[selected_bench_idx]->name + "_" + BenchmarkType_Names[selected_type_idx] + "_" + kElemsStrings[selected_elems_idx];
+            if (this->UsingDGPU)
                 str += "_g";
             return str;
         };
@@ -444,19 +479,35 @@ struct ImPlotBench : App
         static std::string working_name = GetRunName();
         static BenchmarkRun working_run;
         static BenchmarkRecord working_record;
+        static int working_elems = kElemValues[selected_elems_idx];
+        static int working_items = kMaxElems / working_elems;
+        static int working_add = working_items / kMaxSteps;
+
+        static int current_items = 0;
+        static int current_frame = 0;
+
+        static int tcall = 0;
+        static double t1 = 0;
+        static double t2 = 0;
+        static bool running = false;
 
         auto StartNextRun = [&]()
         {
             working_run = m_queue.front();
             m_queue.pop_front();
-            selected_type = working_run.type;
-            selected_bench = working_run.benchmark;
+            selected_type_idx = working_run.type;
+            selected_bench_idx = working_run.benchmark;
+            selected_elems_idx = working_run.elems;
             if (working_run.name.empty())
                 working_run.name = GetRunName();
             working_name = working_run.name;
-            working_record = BenchmarkRecord(kMaxItems + 1);
+            working_record = BenchmarkRecord();
+            working_elems = kElemValues[selected_elems_idx];
+            working_items = kMaxElems / working_elems;
+            working_add = working_items / kMaxSteps;
             t1 = ImGui::GetTime();
             current_items = current_frame = 0;
+            printf("%d x %d + %d\n", working_items, working_elems, working_add);
         };
 
         if (running)
@@ -465,13 +516,13 @@ struct ImPlotBench : App
             if (current_frame == kMaxFrames)
             {
                 t2 = ImGui::GetTime();
-                working_record.AddRecord(current_items, (tcall / kMaxFrames) * 0.001f, 1000.0 * (t2 - t1) / kMaxFrames, kMaxFrames / (t2 - t1));
-                current_items += kAddItems;
+                working_record.AddRecord(current_items * working_elems, (tcall / kMaxFrames) * 0.001f, 1000.0 * (t2 - t1) / kMaxFrames, kMaxFrames / (t2 - t1));
+                current_items += working_add;
                 current_frame = 0;
                 tcall = 0;
                 t1 = ImGui::GetTime();
             }
-            if (current_items > kMaxItems)
+            if (current_items > working_items)
             {
                 working_record.FitData();
                 m_records[m_branch][working_name].Records.push_back(working_record);
@@ -489,14 +540,14 @@ struct ImPlotBench : App
             ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
             ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.25f);
         }
-        ImGui::SetNextItemWidth(150);
-        if (ImGui::BeginCombo("##Benchmark", m_benchmarks[selected_bench]->name.c_str()))
+        ImGui::SetNextItemWidth(100);
+        if (ImGui::BeginCombo("##Benchmark", m_benchmarks[selected_bench_idx]->name.c_str()))
         {
             for (int i = 0; i < m_benchmarks.size(); ++i)
             {
-                if (ImGui::Selectable(m_benchmarks[i]->name.c_str(), i == selected_bench))
+                if (ImGui::Selectable(m_benchmarks[i]->name.c_str(), i == selected_bench_idx))
                 {
-                    selected_bench = i;
+                    selected_bench_idx = i;
                     working_name = GetRunName();
                 }
             }
@@ -504,7 +555,11 @@ struct ImPlotBench : App
         }
         ImGui::SameLine();
         ImGui::SetNextItemWidth(75);
-        if (ImGui::Combo("##Type", &selected_type, BenchmarkType_Names, BenchmarkType_COUNT))
+        if (ImGui::Combo("##Type", &selected_type_idx, BenchmarkType_Names, BenchmarkType_COUNT))
+            working_name = GetRunName();
+        ImGui::SameLine();
+        ImGui::SetNextItemWidth(75);
+        if (ImGui::Combo("##Elems", &selected_elems_idx, kElemsStrings, 4))
             working_name = GetRunName();
         ImGui::SameLine();
         ImGui::SetNextItemWidth(150);
@@ -517,7 +572,7 @@ struct ImPlotBench : App
         ImGui::SameLine();
         if (ImGui::Button("+"))
         {
-            m_queue.push_back({selected_bench, selected_type, kMaxItems, kMaxElems, working_name});
+            m_queue.push_back({selected_bench_idx, selected_type_idx, selected_elems_idx, working_name});
         }
         ImGui::SameLine();
         ImGui::SetNextItemWidth(75);
@@ -543,7 +598,7 @@ struct ImPlotBench : App
             if (running)
             {
                 if (m_queue.size() == 0)
-                    m_queue.push_back({selected_bench, selected_type, kMaxItems, kMaxElems, working_name});
+                    m_queue.push_back({selected_bench_idx, selected_type_idx, selected_elems_idx, working_name});
                 StartNextRun();
             }
             else
@@ -554,26 +609,29 @@ struct ImPlotBench : App
         // ImGui::SameLine();
         // if (ImGui::Button("X", ImVec2(-1,0)))
         //     m_queue.clear();
-        ImGui::ProgressBar((float)current_items / (float)(kMaxItems - 1));
+        ImGui::ProgressBar((float)current_items / (float)(working_items - 1));
         if (ImPlot::BeginPlot("##Bench", ImVec2(-1, -1), ImPlotFlags_NoChild | ImPlotFlags_CanvasOnly))
         {
-            ImPlot::SetupAxesLimits(0, kMaxElems, 0, 1000000, ImGuiCond_Always);
+            ImPlot::SetupAxesLimits(0, kMaxElemsItem, kMaxElemsItem-kDataNoise, kMaxElems+kDataNoise, ImGuiCond_Always);
             ImPlot::SetupAxes(NULL, NULL, ImPlotAxisFlags_NoDecorations, ImPlotAxisFlags_NoDecorations);
             if (running)
             {
-                switch (selected_type)
+                switch (selected_type_idx)
                 {
                 case BenchmarkType_Int:
-                    m_benchmarks[selected_bench]->RunInt(m_items_int, current_items, tcall);
+                    m_benchmarks[selected_bench_idx]->RunInt(m_items_int, current_items, working_elems, tcall);
                     break;
                 case BenchmarkType_Float:
-                    m_benchmarks[selected_bench]->RunFloat(m_items_float, current_items, tcall);
+                    m_benchmarks[selected_bench_idx]->RunFloat(m_items_float, current_items, working_elems, tcall);
                     break;
                 case BenchmarkType_Double:
-                    m_benchmarks[selected_bench]->RunDouble(m_items_double, current_items, tcall);
+                    m_benchmarks[selected_bench_idx]->RunDouble(m_items_double, current_items, working_elems, tcall);
                     break;
                 case BenchmarkType_ImVec2:
-                    m_benchmarks[selected_bench]->RunImVec2(m_items_imvec2, current_items, tcall);
+                    m_benchmarks[selected_bench_idx]->RunImVec2(m_items_imvec2, current_items, working_elems, tcall);
+                    break;
+                case BenchmarkType_ImPlotPoint:
+                    m_benchmarks[selected_bench_idx]->RunImPlotPoint(m_items_implot, current_items, working_elems, tcall);
                     break;
                 default:
                     break;
@@ -619,28 +677,32 @@ struct ImPlotBench : App
         static std::vector<int> to_delete;
         to_delete.clear();
 
-        char xlabel[128];
-        sprintf(xlabel, "Num Items (%d pts ea)", kMaxElems);
+        auto fmtr = [](double value, char *buff, int size, void *user_data)
+        {
+            snprintf(buff, size, "%.0fk", value / 1000);
+        };
+
         if (ImPlot::BeginPlot("##Stats", ImVec2(-1, -1), ImPlotFlags_NoChild))
         {
-            ImPlot::SetupAxis(ImAxis_X1, xlabel);
-            ImPlot::SetupAxis(ImAxis_Y1, "Time [ms]");            
-            ImPlot::SetupAxesLimits(0, kMaxItems, 0, 50);
+            ImPlot::SetupAxis(ImAxis_X1, "Elements");
+            ImPlot::SetupAxis(ImAxis_Y1, "Time [ms]");
+            ImPlot::SetupAxesLimits(0, kMaxElems, 0, 50);
+            ImPlot::SetupAxisFormat(ImAxis_X1, fmtr);
             ImPlot::SetupAxisLimits(ImAxis_Y2, 0, 500, ImPlotCond_Once);
             ImPlot::SetupLegend(ImPlotLocation_East, ImPlotLegendFlags_Outside);
-            if (show_fps)            
+            if (show_fps)
                 ImPlot::SetupAxis(ImAxis_Y2, "FPS [Hz]", ImPlotAxisFlags_Opposite);
-            
+
             for (auto &collection : m_records[selected_branch])
             {
                 auto name = collection.first.c_str();
-                auto col  = collection.second.Col;
+                auto col = collection.second.Col;
                 ImPlot::PushStyleColor(ImPlotCol_Line, col);
                 ImPlot::PushStyleColor(ImPlotCol_MarkerFill, col);
 
-                for (auto& record : collection.second.Records)
+                for (auto &record : collection.second.Records)
                 {
-                    if (record.Items.size() > 1)
+                    if (record.Elems.size() > 1)
                     {
 
                         ImPlot::SetAxis(ImAxis_Y1);
@@ -653,7 +715,7 @@ struct ImPlotBench : App
                             if (show_data)
                             {
                                 ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle, 3);
-                                ImPlot::PlotScatter(name, record.Items.data(), record.Call.data(), record.Items.size());
+                                ImPlot::PlotScatter(name, record.Elems.data(), record.Call.data(), record.Elems.size());
                             }
                         }
                         if (show_frame_time)
@@ -666,13 +728,13 @@ struct ImPlotBench : App
                             if (show_data)
                             {
                                 ImPlot::SetNextMarkerStyle(ImPlotMarker_Square, 3);
-                                ImPlot::PlotScatter(name, record.Items.data(), record.Frame.data(), record.Items.size());
+                                ImPlot::PlotScatter(name, record.Elems.data(), record.Frame.data(), record.Elems.size());
                             }
                         }
                         if (show_fps)
                         {
                             ImPlot::SetAxis(ImAxis_Y2);
-                            ImPlot::PlotLine(name, record.Items.data(), record.Fps.data(), record.Items.size());
+                            ImPlot::PlotLine(name, record.Elems.data(), record.Fps.data(), record.Elems.size());
                         }
                     }
                 }
@@ -682,8 +744,8 @@ struct ImPlotBench : App
         }
     }
 
-
-    void ShowCompareTool() {
+    void ShowCompareTool()
+    {
         static std::string branchL = m_branch;
         static std::string branchR = m_branch;
 
@@ -712,7 +774,8 @@ struct ImPlotBench : App
 
         static std::vector<std::string> bench_union;
         bench_union.clear();
-        for (auto& bench : m_records[branchL]) {
+        for (auto &bench : m_records[branchL])
+        {
             if (m_records[branchR].count(bench.first))
                 bench_union.push_back(bench.first);
         }
@@ -722,28 +785,30 @@ struct ImPlotBench : App
             return;
 
         static std::vector<float> bar;
-        static std::vector<const char*> labels;
-        static const char* branchLabels[2];
+        static std::vector<const char *> labels;
+        static const char *branchLabels[2];
         static double positions[2] = {0, 1};
-        bar.resize(numPlots*2);
+        bar.resize(numPlots * 2);
         labels.resize(numPlots);
 
         branchLabels[0] = branchL.c_str();
         branchLabels[1] = branchR.c_str();
 
-        for (int i = 0; i < numPlots*2; i+=2) {
-            auto& bench = bench_union[i/2];
-            bar[i]   = ImSum(m_records[branchL][bench].Records[0].Call.data(), m_records[branchL][bench].Records[0].Call.size());
-            bar[i+1] = ImSum(m_records[branchR][bench].Records[0].Call.data(), m_records[branchR][bench].Records[0].Call.size());
-            labels[i/2] = bench.c_str();
+        for (int i = 0; i < numPlots * 2; i += 2)
+        {
+            auto &bench = bench_union[i / 2];
+            bar[i] = ImSum(m_records[branchL][bench].Records[0].Call.data(), m_records[branchL][bench].Records[0].Call.size());
+            bar[i + 1] = ImSum(m_records[branchR][bench].Records[0].Call.data(), m_records[branchR][bench].Records[0].Call.size());
+            labels[i / 2] = bench.c_str();
         }
 
-        int groups = 2;     
+        int groups = 2;
 
-        if (ImPlot::BeginPlot("##Comp",ImVec2(-1,-1))) {
-            ImPlot::SetupAxis(ImAxis_X1, "##Bars", ImPlotAxisFlags_NoGridLines|ImPlotAxisFlags_NoTickMarks);
+        if (ImPlot::BeginPlot("##Comp", ImVec2(-1, -1)))
+        {
+            ImPlot::SetupAxis(ImAxis_X1, "##Bars", ImPlotAxisFlags_NoGridLines | ImPlotAxisFlags_NoTickMarks);
             ImPlot::SetupAxisTicks(ImAxis_X1, 0, 1, 2, branchLabels);
-            ImPlot::SetupAxis(ImAxis_Y1, "Total Time [ms]",ImPlotAxisFlags_AutoFit);                   
+            ImPlot::SetupAxis(ImAxis_Y1, "Total Time [ms]", ImPlotAxisFlags_AutoFit);
             ImPlot::PlotBarGroups(labels.data(), bar.data(), numPlots, 2);
             ImPlot::EndPlot();
         }
@@ -753,9 +818,9 @@ struct ImPlotBench : App
         // if (ImPlot::BeginSubplots("##Comp",rows,cols,ImVec2(-1,-1),ImPlotSubplotFlags_NoResize)) {
         //     for (auto& bench : bench_union) {
         //         if (ImPlot::BeginPlot(bench.c_str(), ImVec2(0,0), ImPlotFlags_NoLegend)) {
-        //             ImPlot::SetupAxis(ImAxis_X1, "##X", ImPlotAxisFlags_NoTickLabels|ImPlotAxisFlags_NoGridLines|ImPlotAxisFlags_NoTickMarks);  
+        //             ImPlot::SetupAxis(ImAxis_X1, "##X", ImPlotAxisFlags_NoTickLabels|ImPlotAxisFlags_NoGridLines|ImPlotAxisFlags_NoTickMarks);
         //             ImPlot::SetupAxisLimits(ImAxis_X1,-0.5,1.5f,ImPlotCond_Always);
-        //             ImPlot::SetupAxis(ImAxis_Y1, "Total Time [ms]",ImPlotAxisFlags_AutoFit);                    
+        //             ImPlot::SetupAxis(ImAxis_Y1, "Total Time [ms]",ImPlotAxisFlags_AutoFit);
         //             float v[2];
         //             v[0] = ImSum(m_records[branchL][bench].Records[0].Call.data(), m_records[branchL][bench].Records[0].Call.size());
         //             v[1] = ImSum(m_records[branchR][bench].Records[0].Call.data(), m_records[branchR][bench].Records[0].Call.size());
@@ -766,10 +831,6 @@ struct ImPlotBench : App
         //     }
         //     ImPlot::EndSubplots();
         // }
-
-
-
-
     }
 };
 

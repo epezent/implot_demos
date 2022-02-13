@@ -59,8 +59,6 @@ struct ImPlotDemo : App {
         ImPlot::ShowDemoWindow();   
         ImGui::ShowDemoWindow();
         ImPlot::ShowMetricsWindow();
-
-        ImGui::ShowDemoWindow();
         ImGui::Begin("Test");
         ShowDemo_DragLines();
         ImGui::End();

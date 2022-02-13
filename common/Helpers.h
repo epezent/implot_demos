@@ -39,3 +39,4 @@ inline bool GetBranchName(const std::string &git_repo_path, std::string &branch_
     }
     return result;
 }
+
