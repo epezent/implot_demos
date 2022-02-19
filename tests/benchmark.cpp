@@ -12,7 +12,9 @@
 #include <string>
 #include <chrono>
 #include <deque>
+#include <algorithm>
 #include "plot_line_inline.h"
+#include "Profiler.h"
 
 using Clock = std::chrono::high_resolution_clock;
 
@@ -772,8 +774,11 @@ struct ImPlotBench : App
             ImGui::EndCombo();
         }
 
+
+
         static std::vector<std::string> bench_union;
         bench_union.clear();
+
         for (auto &bench : m_records[branchL])
         {
             if (m_records[branchR].count(bench.first))
@@ -834,9 +839,147 @@ struct ImPlotBench : App
     }
 };
 
+typedef int ImPlotSpec;
+enum ImPlotSpec_ {
+    ImPlotSpec_LineWeight,
+    ImPlotSpec_LineColor,
+    ImPlotSpec_FaceColor,
+    ImPlotSpec_EdgeColor,
+    ImPlotSpec_Marker,
+    ImPlotSpec_MarkerSize,
+    ImPlotSpec_MarkerFaceColor,
+    ImPlotSpec_MarkerEdgeColor,
+    ImPlotSpec_Stride,
+    ImPlotSpec_Offset,
+};
+
+struct ImPlotSpecData {
+    float LineWeight = 1.0f;
+    ImVec4 LineColor = IMPLOT_AUTO_COL;
+    ImVec4 FaceColor = IMPLOT_AUTO_COL;
+    ImVec4 EdgeColor = IMPLOT_AUTO_COL;
+    ImPlotMarker Marker = ImPlotMarker_None;
+    float MarkerSize = 4.0f;
+    ImVec4 MarkerFaceColor = IMPLOT_AUTO_COL;
+    ImVec4 MarkerEdgeColor = IMPLOT_AUTO_COL;
+    int    Stride = 1;
+    int    Offset = 0;
+};
+
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ImPlotSpecData, LineWeight, LineColor, FaceColor, EdgeColor, Marker, MarkerSize, MarkerFaceColor, MarkerEdgeColor, Stride, Offset);
+
+constexpr unsigned int str2int(const char* str, int h = 0)
+{
+    return !str[h] ? 5381 : (str2int(str, h+1) * 33) ^ str[h];
+    printf("derp");
+}
+
+void BuildSpec(ImPlotSpecData& S, ImPlotSpec spec, float v) {
+    switch (spec) {
+        case ImPlotSpec_LineWeight : S.LineWeight = v; break;
+    }
+}
+
+void BuildSpec(ImPlotSpecData& S, const char* spec, float v) {
+    switch (str2int(spec)) {
+        case str2int("LineWeight") : S.LineWeight = v; break;
+    }
+}
+
+void BuildSpec(ImPlotSpecData& S, ImPlotSpec spec, ImPlotMarker_ v) {
+    switch (spec) {
+        case ImPlotSpec_Marker : S.LineWeight = v; break;
+    }
+}
+
+void BuildSpec(ImPlotSpecData& S, const char* spec, ImPlotMarker_ v) {
+    switch (str2int(spec)) {
+        case str2int("Marker") : S.LineWeight = v; break;
+    }
+}
+
+void BuildSpec(ImPlotSpecData& S, ImPlotSpec spec, int v) {
+    switch (spec) {
+        case ImPlotSpec_LineWeight : S.LineWeight = v; break;
+        case ImPlotSpec_Stride     : S.Stride     = v; break;
+        case ImPlotSpec_Offset     : S.Offset     = v; break;
+        case ImPlotSpec_Marker     : S.Marker     = v; break;
+    }
+}
+
+void BuildSpec(ImPlotSpecData& S, const char* spec, int v) {
+    switch (str2int(spec)) {
+        case str2int("LineWeight") : S.LineWeight = v; break;
+        case str2int("Stride")     : S.Stride     = v; break;
+        case str2int("Offset")     : S.Offset     = v; break;
+    }
+}
+
+void BuildSpec(ImPlotSpecData& S, ImPlotSpec spec, ImVec4 v) {
+    switch (spec) {
+        case ImPlotSpec_LineColor       : S.LineColor = v;       break;
+        case ImPlotSpec_FaceColor       : S.FaceColor = v;       break;
+        case ImPlotSpec_EdgeColor       : S.EdgeColor = v;       break;
+        case ImPlotSpec_MarkerFaceColor : S.MarkerFaceColor = v; break;
+        case ImPlotSpec_MarkerEdgeColor : S.MarkerEdgeColor = v; break;
+    }
+}
+
+void BuildSpec(ImPlotSpecData& S, const char* spec, ImVec4 v) {
+    switch (str2int(spec)) {
+        case str2int("LineColor")       : S.LineColor = v;       break;
+        case str2int("FaceColor")       : S.FaceColor = v;       break;
+        case str2int("EdgeColor")       : S.EdgeColor = v;       break;
+        case str2int("MarkerFaceColor") : S.MarkerFaceColor = v; break;
+        case str2int("MarkerEdgeColor") : S.MarkerEdgeColor = v; break;
+    }
+}
+
+template <typename Arg, typename ...Args>
+void BuildSpec(ImPlotSpecData& S, ImPlotSpec spec, Arg arg, Args... args) {
+    BuildSpec(S, spec, arg);
+    BuildSpec(S, args...);
+}
+
+template <typename Arg, typename ...Args>
+void BuildSpec(ImPlotSpecData& S, const char* spec, Arg arg, Args... args) {
+    BuildSpec(S, spec, arg);
+    BuildSpec(S, args...);
+}
+
+void PlotLine(const char* label, float* xs, float *ys, int count, const ImPlotSpecData& S) {
+    json j = S;
+    std::cout << std::setw(4) << j << std::endl;
+}
+
+template <typename ...Args>
+void PlotLine(const char* label, float* xs, float *ys, int count, Args... args) {
+    ImPlotSpecData S;
+    BuildSpec(S, args...);
+    PlotLine(label, xs, ys, count, S);
+}
+
 int main(int argc, char const *argv[])
 {
-    ImPlotBench app(argc, argv);
-    app.Run();
+    float* x = NULL;
+    float* y = NULL;
+    PlotLine("MyLine", x, y, 10, ImPlotSpec_LineColor, ImVec4(1,0,0,1), ImPlotSpec_Marker, ImPlotMarker_Cross, ImPlotSpec_MarkerFaceColor, ImVec4(1,1,0,1), ImPlotSpec_MarkerSize, 5.0f);
+    // SetNextItemSpec("FaceColor", ImVec4(0.1,0.2,0.3,0.4), "LineWeight", 0.5f, "Offset", 10, "MarkerFaceColor", ImVec4(0,1,0,1));
+
+
+
+    // ImPlotBench app(argc, argv);
+    // app.Run();
     return 0;
 }
+
+/*
+Color
+LineStyle
+LineWidth
+Loop
+Marker
+MarkerSize
+MarkerEdgeColor
+MarkerFaceColor
+*/

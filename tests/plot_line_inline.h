@@ -55,6 +55,11 @@ namespace ImPlot
                     plt = ImPlotPoint(xs[idx + 1], ys[idx + 1]);
                     ImVec2 P2 = ImVec2(minx_pix + mx * ((float)plt.x - minx_plt),
                                        miny_pix + my * ((float)plt.y - miny_plt));
+                    if (!cull_rect.Overlaps(ImRect(ImMin(P1, P2), ImMax(P1, P2)))) {
+                        P1 = P2;
+                        prims_culled++;
+                        continue;
+                    }
                     float dx = P2.x - P1.x;
                     float dy = P2.y - P1.y;
                     IMPLOT_NORMALIZE2F_OVER_ZERO(dx, dy);
@@ -87,6 +92,7 @@ namespace ImPlot
                     DrawList._VtxCurrentIdx += 4;
                     P1 = P2;
                 }
+                DrawList.PrimUnreserve(prims_culled * 6, prims_culled * 4);
             }
             EndItem();
         }
