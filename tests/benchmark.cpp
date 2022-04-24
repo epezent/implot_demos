@@ -152,14 +152,17 @@ struct BenchmarkRecord
         MakeFitLine(Elems.data(), Frame.data(), Elems.size(), Frame_Fit, &Frame_M, &Frame_B);
     }
     std::vector<float> Elems;
+
     std::vector<float> Call;
     ImVec2 Call_Fit[2];
     float Call_M = 0;
     float Call_B = 0;
+
     std::vector<float> Frame;
     ImVec2 Frame_Fit[2];
     float Frame_M = 0;
     float Frame_B = 0;
+
     std::vector<float> Fps;
 };
 
@@ -369,6 +372,7 @@ struct BenchmarkRun
     int benchmark;
     int type;
     int elems;
+    bool aa;
     std::string name;
 };
 
@@ -422,25 +426,38 @@ struct ImPlotBench : App
         m_benchmarks.push_back(std::make_unique<Benchmark_PlotLineStaged>());
 
         m_queues["All Plots"] = {
-            {0, BenchmarkType_Float, 2},
-            {1, BenchmarkType_Float, 2},
-            {2, BenchmarkType_Float, 2},
-            {3, BenchmarkType_Float, 2},
+            {0, BenchmarkType_Float, 2, true},
+            {1, BenchmarkType_Float, 2, true},
+            {2, BenchmarkType_Float, 2, true},
+            {3, BenchmarkType_Float, 2, true},
         };
 
         m_queues["All Elems"] = {
-            {0, BenchmarkType_Float, 0},
-            {0, BenchmarkType_Float, 1},
-            {0, BenchmarkType_Float, 2},
-            {0, BenchmarkType_Float, 3},
+            {0, BenchmarkType_Float, 0, true},
+            {0, BenchmarkType_Float, 1, true},
+            {0, BenchmarkType_Float, 2, true},
+            {0, BenchmarkType_Float, 3, true},
         };
 
         m_queues["All Types"] = {
-            {0, BenchmarkType_Int, 2},
-            {0, BenchmarkType_Float, 2},
-            {0, BenchmarkType_Double, 2},
-            {0, BenchmarkType_ImVec2, 2},
-            {0, BenchmarkType_ImPlotPoint, 2},
+            {0, BenchmarkType_Int, 2, true},
+            {0, BenchmarkType_Float, 2, true},
+            {0, BenchmarkType_Double, 2, true},
+            {0, BenchmarkType_ImVec2, 2, true},
+            {0, BenchmarkType_ImPlotPoint, 2, true},
+        };
+
+        m_queues["Optimize"] = {
+            {0, BenchmarkType_Double, 2, true},
+            {4, BenchmarkType_Double, 2, true},
+            {0, BenchmarkType_Double, 2, true},
+            {4, BenchmarkType_Double, 2, true},
+            {0, BenchmarkType_Double, 2, true},
+            {4, BenchmarkType_Double, 2, true},
+            {0, BenchmarkType_Double, 2, true},
+            {4, BenchmarkType_Double, 2, true},
+            {0, BenchmarkType_Double, 2, true},
+            {4, BenchmarkType_Double, 2, true},
         };
 
         BenchmarkQueue everything;
@@ -485,12 +502,15 @@ struct ImPlotBench : App
     void ShowBenchmarkTool()
     {
         static int selected_bench_idx = 0; // PlotLine
-        static int selected_type_idx = BenchmarkType_Float;
+        static int selected_type_idx = BenchmarkType_Double;
         static int selected_elems_idx = 2; // 1000
+        static bool selected_aa = true;
 
         auto GetRunName = [&]()
         {
             auto str = m_benchmarks[selected_bench_idx]->name + "_" + BenchmarkType_Names[selected_type_idx] + "_" + kElemsStrings[selected_elems_idx];
+            if (!selected_aa)
+                str += "_noaa";
             if (this->UsingDGPU)
                 str += "_g";
             return str;
@@ -502,19 +522,19 @@ struct ImPlotBench : App
         static int working_elems = kElemValues[selected_elems_idx];
         static int working_items = kMaxElems / working_elems;
         static int working_add = working_items / kMaxSteps;
+        static bool working_aa = true;
 
         static int current_items = 0;
         static int current_frame = 0;
 
         static int tcall = 0;
+        static int tother = 0;
         static double t1 = 0;
         static double t2 = 0;
         static bool running = false;
 
         static std::chrono::high_resolution_clock::time_point run_t1;
         static std::chrono::high_resolution_clock::time_point run_t2;
-
-
 
         auto StartNextRun = [&]()
         {
@@ -523,6 +543,7 @@ struct ImPlotBench : App
             selected_type_idx = working_run.type;
             selected_bench_idx = working_run.benchmark;
             selected_elems_idx = working_run.elems;
+            selected_aa = working_run.aa;
             if (working_run.name.empty())
                 working_run.name = GetRunName();
             working_name = working_run.name;
@@ -530,6 +551,7 @@ struct ImPlotBench : App
             working_elems = kElemValues[selected_elems_idx];
             working_items = kMaxElems / working_elems;
             working_add = working_items / kMaxSteps;
+            working_aa = working_run.aa;
             t1 = ImGui::GetTime();
             current_items = current_frame = 0;
         };
@@ -591,7 +613,10 @@ struct ImPlotBench : App
         if (ImGui::Combo("##Elems", &selected_elems_idx, kElemsStrings, 4))
             working_name = GetRunName();
         ImGui::SameLine();
-        ImGui::SetNextItemWidth(150);
+        if (ImGui::Checkbox("AA",&selected_aa))
+            working_name = GetRunName();
+        ImGui::SameLine();
+        ImGui::SetNextItemWidth(125);
         ImGui::InputText("##Name", &working_name);
         if (was_running)
         {
@@ -601,7 +626,7 @@ struct ImPlotBench : App
         ImGui::SameLine();
         if (ImGui::Button("+"))
         {
-            m_queue.push_back({selected_bench_idx, selected_type_idx, selected_elems_idx, working_name});
+            m_queue.push_back({selected_bench_idx, selected_type_idx, selected_elems_idx, selected_aa, working_name});
         }
         ImGui::SameLine();
         ImGui::SetNextItemWidth(75);
@@ -628,7 +653,7 @@ struct ImPlotBench : App
             if (running)
             {
                 if (m_queue.size() == 0)
-                    m_queue.push_back({selected_bench_idx, selected_type_idx, selected_elems_idx, working_name});
+                    m_queue.push_back({selected_bench_idx, selected_type_idx, selected_elems_idx, selected_aa, working_name});
                 StartNextRun();
                 run_t1 = Clock::now();
             }
@@ -641,6 +666,9 @@ struct ImPlotBench : App
         // if (ImGui::Button("X", ImVec2(-1,0)))
         //     m_queue.clear();
         ImGui::ProgressBar((float)current_items / (float)(working_items - 1));
+
+        GImGui->Style.AntiAliasedLines = GImGui->Style.AntiAliasedLinesUseTex = working_aa;
+
         if (ImPlot::BeginPlot("##Bench", ImVec2(-1, -1), ImPlotFlags_NoChild | ImPlotFlags_CanvasOnly))
         {
             ImPlot::SetupAxesLimits(0, kMaxElemsItem, kMaxElemsItem-kDataNoise, kMaxElems+kDataNoise, ImGuiCond_Always);
@@ -684,9 +712,9 @@ struct ImPlotBench : App
         if (ImGui::Button("Clear"))
             m_records[selected_branch].clear();
         ImGui::SameLine();
-        ImGui::Checkbox("Call Time", &show_call_time);
+        ImGui::Checkbox("Call", &show_call_time);
         ImGui::SameLine();
-        ImGui::Checkbox("Frame Time", &show_frame_time);
+        ImGui::Checkbox("Frame", &show_frame_time);
         ImGui::SameLine();
         ImGui::Checkbox("FPS", &show_fps);
         ImGui::SameLine();
@@ -766,6 +794,9 @@ struct ImPlotBench : App
                         {
                             ImPlot::SetAxis(ImAxis_Y2);
                             ImPlot::PlotLine(name, record.Elems.data(), record.Fps.data(), record.Elems.size());
+                            static double sixty = 60;
+                            ImPlot::DragLineY(0, &sixty, ImVec4(1,1,0,1), 1, ImPlotDragToolFlags_NoInputs);
+                            ImPlot::TagY(sixty, ImVec4(1,1,0,1), "60");
                         }
                     }
                 }

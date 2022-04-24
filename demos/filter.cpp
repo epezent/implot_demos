@@ -166,7 +166,8 @@ struct ImFilter : public App {
                 static const double co = -3;
                 if (ImPlot::BeginPlot("##Bode1",ImVec2(-1,-1))) {
                     ImPlot::SetupAxesLimits(1,500,-100,10);
-                    ImPlot::SetupAxes("Frequency [Hz]","Magnitude [dB]",ImPlotAxisFlags_LogScale);
+                    ImPlot::SetupAxes("Frequency [Hz]","Magnitude [dB]");
+                    ImPlot::SetupAxisScale(ImAxis_X1, ImPlotScale_Log10);
                     ImPlot::SetNextLineStyle({1,1,1,1});
                     ImPlot::PlotInfLines("##3dB",&co,1,ImPlotInfLinesFlags_Horizontal);
                     ImPlot::SetNextFillStyle(IMPLOT_AUTO_COL, 0.250f);
@@ -182,7 +183,8 @@ struct ImFilter : public App {
             if (ImGui::BeginTabItem("Phase")) {
                 if (ImPlot::BeginPlot("##Bode2",ImVec2(-1,-1))) {  
                     ImPlot::SetupAxesLimits(1,500,-180,10);
-                    ImPlot::SetupAxes("Frequency [Hz]","Phase Angle [deg]",ImPlotAxisFlags_LogScale);
+                    ImPlot::SetupAxes("Frequency [Hz]","Phase Angle [deg]");
+                    ImPlot::SetupAxisScale(ImAxis_X1, ImPlotScale_Log10);
                     ImPlot::SetNextFillStyle(IMPLOT_AUTO_COL, 0.250f);
                     ImPlot::PlotShaded("##Phase1",result.f.data(),result.phase.data(),(int)result.f.size(),-INFINITY);
                     ImPlot::PlotLine("##Phase2",result.f.data(),result.phase.data(),(int)result.f.size());

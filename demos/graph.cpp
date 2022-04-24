@@ -70,7 +70,7 @@ struct ImGraph : App {
             if (valid) {
                 ImPlot::SetNextLineStyle(expr.color);
                 ImPlot::PlotLineG("##item",
-                    [](void* data, int idx) {
+                    [](int idx, void* data) {
                     auto& self = *(ImGraph*)data;
                     double x = remap((double)idx, 0.0, 9999.0, self.limits.X.Min, self.limits.X.Max);
                     double y = self.expr.eval(x);
