@@ -426,17 +426,17 @@ struct ImPlotBench : App
         m_benchmarks.push_back(std::make_unique<Benchmark_PlotLineStaged>());
 
         m_queues["All Plots"] = {
-            {0, BenchmarkType_Float, 2, true},
-            {1, BenchmarkType_Float, 2, true},
-            {2, BenchmarkType_Float, 2, true},
-            {3, BenchmarkType_Float, 2, true},
+            {0, BenchmarkType_Double, 2, true},
+            {1, BenchmarkType_Double, 2, true},
+            {2, BenchmarkType_Double, 2, true},
+            {3, BenchmarkType_Double, 2, true},
         };
 
         m_queues["All Elems"] = {
-            {0, BenchmarkType_Float, 0, true},
-            {0, BenchmarkType_Float, 1, true},
-            {0, BenchmarkType_Float, 2, true},
-            {0, BenchmarkType_Float, 3, true},
+            {0, BenchmarkType_Double, 0, true},
+            {0, BenchmarkType_Double, 1, true},
+            {0, BenchmarkType_Double, 2, true},
+            {0, BenchmarkType_Double, 3, true},
         };
 
         m_queues["All Types"] = {
