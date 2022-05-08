@@ -16,8 +16,6 @@
 #include <fmt/format.h>
 #include <implot_internal.h>
 
-
-
 namespace fs = std::filesystem;
 
 enum Interval

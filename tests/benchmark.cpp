@@ -645,8 +645,8 @@ struct ImPlotBench : App
         }
         ImGui::SameLine();
         static char start_str[32];
-        sprintf(start_str, "Start (%u)", m_queue.size());
-        if (ImGui::Button(running ? "Stop" : start_str, ImVec2(-1, 0)))
+        sprintf(start_str, running ? "Stop (%u)" : "Start (%u)", m_queue.size());
+        if (ImGui::Button(start_str, ImVec2(-1, 0)))
         {
             running = !running;
             current_items = current_frame = 0;
@@ -773,7 +773,7 @@ struct ImPlotBench : App
                             }
                             if (show_data)
                             {
-                                ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle, 3);
+                                ImPlot::SetNextMarkerStyle(ImPlotMarker_Square, 3);
                                 ImPlot::PlotScatter(name, record.Elems.data(), record.Call.data(), record.Elems.size());
                             }
                         }
