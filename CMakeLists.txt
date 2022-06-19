@@ -196,11 +196,6 @@ add_executable(voice "demos/voice.cpp" ${KISS_SRC})
 target_link_libraries(voice app)        
 target_compile_features(voice PRIVATE cxx_std_17)
 
-# profiler demo
-add_executable(profiler "demos/profiler.cpp")              
-target_link_libraries(profiler app)        
-target_compile_features(profiler PRIVATE cxx_std_17)
-
 ###############################################################################
 # TEST APPS
 ###############################################################################

@@ -34,3 +34,5 @@
 *.exe
 *.out
 *.app
+
+.vs
