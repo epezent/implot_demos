@@ -17,8 +17,6 @@
 #include <string>
 #include <chrono>
 
-// namespace fs = std::filesystem;
-
 #define RESTART_IDX 4294967295
 
 #if defined __SSE__ || defined __x86_64__ || defined _M_X64
@@ -67,8 +65,8 @@ namespace ImPlot
         {
             ImAxis x = plot->CurrentX;
             ImAxis y = plot->CurrentY;
-            M.x = plot->Axes[x].LinM;
-            M.y = plot->Axes[y].LinM;
+            M.x = plot->Axes[x].ScaleToPixel;
+            M.y = plot->Axes[y].ScaleToPixel;
             PltMin.x = (float)plot->Axes[x].Range.Min;
             PltMin.y = (float)plot->Axes[y].Range.Min;
             PixMin.x = plot->Axes[x].PixelMin;
@@ -216,18 +214,22 @@ namespace ImPlot
         }
     }
 
-    void PlotLineInline(const char *label_id, const ImVec2 *values, int count)
+    void PlotLineMinimal(const char *label_id, const ImVec2 *values, int count)
     {
+        static ImVector<float> xs;
+        static ImVector<float> ys;
+
+        xs.resize(count);
+        ys.resize(count);
+
+        for (int i = 0; i < count; ++i) {
+            xs[i] = values[i].x;
+            ys[i] = values[i].y;
+        }
+
         ImPlotContext &gp = *GImPlot;
         if (BeginItem(label_id, ImPlotCol_Line))
         {
-            if (FitThisFrame())
-            {
-                for (int i = 0; i < count; ++i)
-                {
-                    FitPoint(ImPlotPoint(values[i].x, values[i].y));
-                }
-            }
             const ImPlotNextItemData &s = GetItemData();
             ImDrawList &DrawList = *GetPlotDrawList();
             if (count > 1 && s.RenderLine)
@@ -239,22 +241,22 @@ namespace ImPlot
                 unsigned int idx = 0;
                 const ImVec2 uv = DrawList._Data->TexUvWhitePixel;
 
-                const float minx_pix = 1; // gp.PixelRange[0].Min.x;
-                const float miny_pix = 1; // gp.PixelRange[0].Min.y;
-                const float minx_plt = 1; // (float)gp.CurrentPlot->XAxis[0].Range.Min;
-                const float miny_plt = 1; // (float)gp.CurrentPlot->YAxis[0].Range.Min;
-                const float mx = 1;       // (float)gp.Mx[0];
-                const float my = 1;       // (float)gp.My[0];
+                const float minx_pix = gp.CurrentPlot->Axes[ImAxis_X1].PixelMin;
+                const float miny_pix = gp.CurrentPlot->Axes[ImAxis_Y1].PixelMin;
+                const float minx_plt = gp.CurrentPlot->Axes[ImAxis_X1].Range.Min;
+                const float miny_plt = gp.CurrentPlot->Axes[ImAxis_Y1].Range.Min;
+                const float mx       = gp.CurrentPlot->Axes[ImAxis_X1].ScaleToPixel;
+                const float my       = gp.CurrentPlot->Axes[ImAxis_Y1].ScaleToPixel;
 
                 ImRect cull_rect = gp.CurrentPlot->PlotRect;
-                ImPlotPoint plt = ImPlotPoint(values[0].x, values[0].y);
+                ImPlotPoint plt = ImPlotPoint(xs[0], ys[0]);
                 ImVec2 P1 = ImVec2(minx_pix + mx * ((float)plt.x - minx_plt),
                                    miny_pix + my * ((float)plt.y - miny_plt));
 
                 DrawList.PrimReserve(prims * 6, prims * 4);
                 for (unsigned int idx = 0; idx < prims; ++idx)
                 {
-                    plt = ImPlotPoint(values[idx + 1].x, values[idx + 1].y);
+                    plt = ImPlotPoint(xs[idx + 1], ys[idx + 1]);
                     ImVec2 P2 = ImVec2(minx_pix + mx * ((float)plt.x - minx_plt),
                                        miny_pix + my * ((float)plt.y - miny_plt));
                     float dx = P2.x - P1.x;
@@ -293,92 +295,6 @@ namespace ImPlot
             EndItem();
         }
     }
-
-    void PlotLineNoTess(const char *label_id, const ImVec2 *values, int count)
-    {
-        ImPlotContext &gp = *GImPlot;
-        if (BeginItem(label_id, ImPlotCol_Line))
-        {
-            if (FitThisFrame())
-            {
-                for (int i = 0; i < count; ++i)
-                    FitPoint(ImPlotPoint(values[i].x, values[i].y));
-            }
-            const ImPlotNextItemData &s = GetItemData();
-            ImDrawList &DrawList = *GetPlotDrawList();
-            if (count > 1 && s.RenderLine)
-            {
-                unsigned int prims = count - 1;
-                const ImU32 col = ImGui::GetColorU32(s.Colors[ImPlotCol_Line]);
-                const ImVec2 uv = DrawList._Data->TexUvWhitePixel;
-
-                auto P = GImPlot->CurrentPlot->PlotRect.GetCenter();
-
-                DrawList.PrimReserve(prims * 6, prims * 4);
-                for (unsigned int idx = 0; idx < prims; ++idx)
-                {
-                    DrawList._VtxWritePtr[0].pos.x = P.x; //[pos.x][pos.y][uv.xy][col] [pos.x][pos.y][uv][col] [pos.x][pos.y][uv][col]
-                    DrawList._VtxWritePtr[0].pos.y = P.y;
-                    DrawList._VtxWritePtr[1].pos.x = P.x;
-                    DrawList._VtxWritePtr[1].pos.y = P.y;
-                    DrawList._VtxWritePtr[2].pos.x = P.x;
-                    DrawList._VtxWritePtr[2].pos.y = P.y;
-                    DrawList._VtxWritePtr[3].pos.x = P.x;
-                    DrawList._VtxWritePtr[3].pos.y = P.y;
-
-                    DrawList._VtxWritePtr[0].uv = uv;
-                    DrawList._VtxWritePtr[1].uv = uv;
-                    DrawList._VtxWritePtr[2].uv = uv;
-                    DrawList._VtxWritePtr[3].uv = uv;
-
-                    DrawList._VtxWritePtr[0].col = col;
-                    DrawList._VtxWritePtr[1].col = col;
-                    DrawList._VtxWritePtr[2].col = col;
-                    DrawList._VtxWritePtr[3].col = col;
-
-                    DrawList._IdxWritePtr[0] = (ImDrawIdx)(DrawList._VtxCurrentIdx);
-                    DrawList._IdxWritePtr[1] = (ImDrawIdx)(DrawList._VtxCurrentIdx + 1);
-                    DrawList._IdxWritePtr[2] = (ImDrawIdx)(DrawList._VtxCurrentIdx + 2);
-                    DrawList._IdxWritePtr[3] = (ImDrawIdx)(DrawList._VtxCurrentIdx);
-                    DrawList._IdxWritePtr[4] = (ImDrawIdx)(DrawList._VtxCurrentIdx + 2);
-                    DrawList._IdxWritePtr[5] = (ImDrawIdx)(DrawList._VtxCurrentIdx + 3);
-
-                    DrawList._VtxWritePtr += 4;
-                    DrawList._IdxWritePtr += 6;
-                    DrawList._VtxCurrentIdx += 4;
-                }
-            }
-            EndItem();
-        }
-    }
-
-    void PlotLineNoWrite(const char *label_id, const ImVec2 *values, int count)
-    {
-        ImPlotContext &gp = *GImPlot;
-        if (BeginItem(label_id, ImPlotCol_Line))
-        {
-            if (FitThisFrame())
-            {
-                for (int i = 0; i < count; ++i)
-                    FitPoint(ImPlotPoint(values[i].x, values[i].y));
-            }
-            const ImPlotNextItemData &s = GetItemData();
-            ImDrawList &DrawList = *GetPlotDrawList();
-            if (count > 1 && s.RenderLine)
-            {
-                unsigned int prims = count - 1;
-                DrawList.PrimReserve(prims * 6, prims * 4);
-                for (unsigned int idx = 0; idx < prims; ++idx)
-                {
-                    DrawList._VtxWritePtr += 4;
-                    DrawList._IdxWritePtr += 6;
-                    DrawList._VtxCurrentIdx += 4;
-                }
-            }
-            EndItem();
-        }
-    }
-
 } // namespace ImPlot
 
 using Clock = std::chrono::high_resolution_clock;
@@ -401,16 +317,12 @@ struct ScopedProfiler
 enum BenchMode
 {
     BenchMode_Line = 0,
-    BenchMode_LineG,
-    BenchMode_LineInline,
-    BenchMode_LineImGui,
-    BenchMode_LineNoTess,
-    BenchMode_LineNoWrite,
+    BenchMode_LineMinimal,
     BenchMode_LineGPU,
     BenchMode_COUNT
 };
 
-static const char *BenchMode_Names[] = {"Line", "LineG", "LineInline", "LineImGui", "LineNoTess", "LineNoWrite", "LineGPU"};
+static const char *BenchMode_Names[] = {"Line", "LineG", "LineMinimal", "LineGPU"};
 
 struct BenchRecord
 {
@@ -565,11 +477,6 @@ struct ImPlotBench : App
         auto get_run_name = [&]()
         {
             auto str = branch + "_" + std::string(BenchMode_Names[mode]);
-            if (mode == BenchMode_LineImGui)
-            {
-                str += GImGui->Style.AntiAliasedLines ? "-AA" : "";
-                str += GImGui->Style.AntiAliasedLinesUseTex ? "-Tex" : "";
-            }
             return str;
         };
 
@@ -600,7 +507,6 @@ struct ImPlotBench : App
         // ImGui::Text("ImDrawIdx: %d-bit", (int)(sizeof(ImDrawIdx) * 8));
         // ImGui::Text("ImGuiBackendFlags_RendererHasVtxOffset: %s", (ImGui::GetIO().BackendFlags & ImGuiBackendFlags_RendererHasVtxOffset) ? "True" : "False");
         // ImGui::Text("%.2f FPS", ImGui::GetIO().Framerate);
-
         // ImGui::Separator();
 
         bool was_running = running;
@@ -634,16 +540,6 @@ struct ImPlotBench : App
         ImGui::SetNextItemWidth(100);
         if (ImGui::Combo("##Mode", &mode, BenchMode_Names, BenchMode_COUNT))
             run_name = get_run_name();
-        ImGui::SameLine();
-        if (ImGui::Checkbox("AA", &GImGui->Style.AntiAliasedLines))
-        {
-            run_name = get_run_name();
-        }
-        ImGui::SameLine();
-        if (ImGui::Checkbox("Tex", &GImGui->Style.AntiAliasedLinesUseTex))
-        {
-            run_name = get_run_name();
-        }
         ImGui::SameLine();
         ImGui::SetNextItemWidth(-1);
         ImGui::InputText("##name", &run_name);
@@ -735,12 +631,12 @@ struct ImPlotBench : App
                 ImPlot::SetNextLineStyle(items[i].Col);
                 {
                     ScopedProfiler prof(call_time);
-                    ImPlot::PlotLine("##item", &items[i].Data[0].x, &items[i].Data[0].y, 1000, 0, sizeof(ImVec2));
+                    ImPlot::PlotLine("##item", &items[i].Data[0].x, &items[i].Data[0].y, 1000, 0, 0, sizeof(ImVec2));
                 }
                 ImGui::PopID();
             }
         }
-        else if (mode == BenchMode_LineG)
+        else if (mode == BenchMode_LineMinimal)
         {
             for (int i = 0; i < L; ++i)
             {
@@ -748,67 +644,7 @@ struct ImPlotBench : App
                 ImPlot::SetNextLineStyle(items[i].Col);
                 {
                     ScopedProfiler prof(call_time);
-                    ImPlot::PlotLineG(
-                        "##item", [](void *in, int idx)
-                        {
-                            ImVec2 *data = (ImVec2 *)in;
-                            return ImPlotPoint(data[idx].x, data[idx].y);
-                        },
-                        items[i].Data, 1000);
-                }
-                ImGui::PopID();
-            }
-        }
-        else if (mode == BenchMode_LineInline)
-        {
-            for (int i = 0; i < L; ++i)
-            {
-                ImGui::PushID(i);
-                ImPlot::SetNextLineStyle(items[i].Col);
-                {
-                    ScopedProfiler prof(call_time);
-                    ImPlot::PlotLineInline("##item", items[i].Data, 1000);
-                }
-                ImGui::PopID();
-            }
-        }
-        else if (mode == BenchMode_LineImGui)
-        {
-            GImPlot->Style.AntiAliasedLines = true;
-            for (int i = 0; i < L; ++i)
-            {
-                ImGui::PushID(i);
-                ImPlot::SetNextLineStyle(items[i].Col);
-                {
-                    ScopedProfiler prof(call_time);
-                    ImPlot::PlotLine("##item", &items[i].Data[0].x, &items[i].Data[0].y, 1000, 0, sizeof(ImVec2));
-                }
-                ImGui::PopID();
-            }
-            GImPlot->Style.AntiAliasedLines = false;
-        }
-        else if (mode == BenchMode_LineNoTess)
-        {
-            for (int i = 0; i < L; ++i)
-            {
-                ImGui::PushID(i);
-                ImPlot::SetNextLineStyle(items[i].Col);
-                {
-                    ScopedProfiler prof(call_time);
-                    ImPlot::PlotLineNoTess("##item", items[i].Data, 1000);
-                }
-                ImGui::PopID();
-            }
-        }
-        else if (mode == BenchMode_LineNoWrite)
-        {
-            for (int i = 0; i < L; ++i)
-            {
-                ImGui::PushID(i);
-                ImPlot::SetNextLineStyle(items[i].Col);
-                {
-                    ScopedProfiler prof(call_time);
-                    ImPlot::PlotLineNoWrite("##item", items[i].Data, 1000);
+                    ImPlot::PlotLineMinimal("##item", items[i].Data, 1000);
                 }
                 ImGui::PopID();
             }

@@ -150,6 +150,7 @@ App::App(std::string title, int w, int h, int argc, char const *argv[])
     const bool use_msaa = result["msaa"].as<bool>();
     const bool im_style = result["imgui"].as<bool>();
     NvOptimusEnablement = AmdPowerXpressRequestHighPerformance = result["gpu"].as<bool>();
+    UsingDGPU = result["gpu"].as<bool>();
 
 #ifdef _DEBUG
     title += " - OpenGL - Debug";
@@ -173,7 +174,6 @@ App::App(std::string title, int w, int h, int argc, char const *argv[])
 #else
     // GL 3.0 + GLSL 130
     const char *glsl_version = "#version 130";
-    glfwWindowHint(GLFW_SAMPLES, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+ only

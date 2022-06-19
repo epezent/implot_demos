@@ -183,14 +183,14 @@ struct ImSpectrogram : App {
             int idx = (int)((m_samples.size() - N_FFT) * (m_time/m_duration));
             idx -= idx % N_FFT;
             kiss_fftr(m_fft, &m_samples[idx], reinterpret_cast<kiss_fft_cpx*>(m_fft_out));
-            auto getter1 = [](void* data, int i) {
+            auto getter1 = [](int i, void* data) {
                 ImSpectrogram& spec = *(ImSpectrogram*)(data);
                 double db = 20*log10(std::abs(spec.m_fft_out[i]));
                 double x = remap01((double)i,0.0,(double)(N_FRQ-1));
                 double y = remap(db,spec.m_min_db,spec.m_max_db,-1.0,1.0);
                 return ImPlotPoint(x,y);
             };
-            auto getter2 = [](void*, int i) {
+            auto getter2 = [](int i, void*) {
                 double x = remap01((double)i,0.0,(double)(N_FRQ-1));
                 return ImPlotPoint(x,-1.0);
             };

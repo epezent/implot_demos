@@ -27,7 +27,6 @@ struct App
 {
     // Constructor.
     App(std::string title, int w, int h, int argc, char const *argv[]);
-    App(std::string title, int w, int h, cxxopts::Options options);
     // Destructor.
     virtual ~App();
     // Called at top of run
@@ -42,4 +41,5 @@ struct App
     ImVec4 ClearColor;                    // background clear color
     GLFWwindow* Window;                   // GLFW window handle
     std::map<std::string,ImFont*> Fonts;  // font map
+    bool UsingDGPU;                       // using discrete gpu (laptops only)
 };
