@@ -167,7 +167,7 @@ struct ImSpectrogram : App {
             ImPlot::EndPlot();
         }
         ImGui::SameLine();
-        ImPlot::ColormapScale("##Scale",m_min_db,m_max_db,{100,h},IMPLOT_AUTO,"%g dB");
+        ImPlot::ColormapScale("##Scale",m_min_db,m_max_db,{100,h},"%g dB",0,IMPLOT_AUTO);
         if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right))
             ImGui::OpenPopup("Range");
         if (ImGui::BeginPopup("Range")) {
@@ -190,7 +190,7 @@ struct ImSpectrogram : App {
                 double y = remap(db,spec.m_min_db,spec.m_max_db,-1.0,1.0);
                 return ImPlotPoint(x,y);
             };
-            auto getter2 = [](int i, void*) {
+            auto getter2 = [](int i, void*) { 
                 double x = remap01((double)i,0.0,(double)(N_FRQ-1));
                 return ImPlotPoint(x,-1.0);
             };

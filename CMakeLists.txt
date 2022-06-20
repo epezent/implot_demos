@@ -7,7 +7,7 @@ project(implot_demos VERSION 0.1.0)
 
 # FETCH CONTENT LIBS
 include(FetchContent) 
-set(FETCHCONTENT_FULLY_DISCONNECTED ON)
+# set(FETCHCONTENT_FULLY_DISCONNECTED ON)
 
 FetchContent_Declare(fmt GIT_REPOSITORY https://github.com/fmtlib/fmt)
 FetchContent_MakeAvailable(fmt)

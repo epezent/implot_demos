@@ -738,7 +738,7 @@ struct ImPlotBench : App
 
         auto fmtr = [](double value, char *buff, int size, void *user_data)
         {
-            snprintf(buff, size, "%.0fk", value / 1000);
+            return snprintf(buff, size, "%.0fk", value / 1000);
         };
 
         if (ImPlot::BeginPlot("##Stats", ImVec2(-1, -1), ImPlotFlags_NoChild))

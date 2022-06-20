@@ -254,20 +254,18 @@ void PlotOHLC(const char* label_id, const TickerData& data, ImVec4 bullCol = ImV
     }
 }
 
-void VolumeFormatter(double value, char* buff, int size, void*) {
+int VolumeFormatter(double value, char* buff, int size, void*) {
     static double v[]      = {1000000000000,1000000000,1000000,1000,1};
     static const char* p[] = {"T","B","M","k",""};
     if (value == 0) {
-        snprintf(buff,size,"0");
-        return;
+        return snprintf(buff,size,"0");
     }
     for (int i = 0; i < 5; ++i) {
         if (fabs(value) >= v[i]) {
-            snprintf(buff,size,"%g%s",value/v[i],p[i]);
-            return;
+            return snprintf(buff,size,"%g%s",value/v[i],p[i]);
         }
     }
-    snprintf(buff,size,"%g%s",value/v[4],p[4]);
+    return snprintf(buff,size,"%g%s",value/v[4],p[4]);
 }
 
 struct ImStocks : App
