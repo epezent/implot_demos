@@ -283,7 +283,7 @@ struct ImStocks : App
         t1 = ImPlot::AddTime(t2, ImPlotTimeUnit_Yr, -5);
         ImPlot::FormatDate(t1,t1_str,32,ImPlotDateFmt_DayMoYr,true);
         ImPlot::FormatDate(t2,t2_str,32,ImPlotDateFmt_DayMoYr,true);
-        auto d = m_api.get_ticker("FB", t1_str, t2_str, Interval_Daily);
+        auto d = m_api.get_ticker("META", t1_str, t2_str, Interval_Daily);
         if (d.ticker != "ERROR")
             m_ticker_data[d.ticker] = d;
         ImPlot::GetStyle().FitPadding.y = 0.2f;
@@ -301,7 +301,7 @@ struct ImStocks : App
         
 
 
-        static char buff[8] = "FB";
+        static char buff[8] = "META";
         ImGui::SetNextItemWidth(200);
         if (ImGui::InputText("##Ticker",buff,8,ImGuiInputTextFlags_EnterReturnsTrue|ImGuiInputTextFlags_CharsUppercase)) {
 

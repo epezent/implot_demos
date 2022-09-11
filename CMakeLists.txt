@@ -196,11 +196,6 @@ add_executable(voice "demos/voice.cpp" ${KISS_SRC})
 target_link_libraries(voice app)        
 target_compile_features(voice PRIVATE cxx_std_17)
 
-# finance demo
-add_executable(finance "demos/finance.cpp")              
-target_link_libraries(finance app)        
-target_compile_features(finance PRIVATE cxx_std_17)
-
 ###############################################################################
 # TEST APPS
 ###############################################################################
