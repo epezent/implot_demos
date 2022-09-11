@@ -298,7 +298,7 @@ struct ImStocks : App
         ImGui::SetNextWindowPos(ImVec2(0,0), ImGuiCond_Always);
         ImGui::SetNextWindowSize(GetWindowSize(), ImGuiCond_Always);
         ImGui::Begin("##ImStocks", nullptr, ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoResize/*|ImGuiWindowFlags_MenuBar*/);
-
+        
 
 
         static char buff[8] = "FB";

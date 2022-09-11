@@ -167,7 +167,7 @@ struct ImSpectrogram : App {
             ImPlot::EndPlot();
         }
         ImGui::SameLine();
-        ImPlot::ColormapScale("##Scale",m_min_db,m_max_db,{100,h},"%g dB",0,IMPLOT_AUTO);
+        ImPlot::ColormapScale("##Scale",m_min_db,m_max_db,{100,h},"%g dB");
         if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right))
             ImGui::OpenPopup("Range");
         if (ImGui::BeginPopup("Range")) {
