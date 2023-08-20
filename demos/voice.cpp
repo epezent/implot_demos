@@ -49,7 +49,7 @@ struct ImVoice : App {
     void Update() {
         static bool pause = false;
 
-        if (ImGui::IsKeyPressed(GLFW_KEY_SPACE))
+        if (ImGui::IsKeyPressed((ImGuiKey)GLFW_KEY_SPACE))
             pause = !pause;
         if (!pause && g_buffer1.size() >= 441) {
             std::lock_guard<std::mutex> lock(g_mtx);

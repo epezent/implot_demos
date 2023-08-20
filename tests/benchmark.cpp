@@ -669,7 +669,7 @@ struct ImPlotBench : App
 
         GImGui->Style.AntiAliasedLines = GImGui->Style.AntiAliasedLinesUseTex = working_aa;
 
-        if (ImPlot::BeginPlot("##Bench", ImVec2(-1, -1), ImPlotFlags_NoChild | ImPlotFlags_CanvasOnly))
+        if (ImPlot::BeginPlot("##Bench", ImVec2(-1, -1), ImPlotFlags_CanvasOnly))
         {
             ImPlot::SetupAxesLimits(0, kMaxElemsItem, kMaxElemsItem-kDataNoise, kMaxElems+kDataNoise, ImGuiCond_Always);
             ImPlot::SetupAxes(NULL, NULL, ImPlotAxisFlags_NoDecorations, ImPlotAxisFlags_NoDecorations);
@@ -741,7 +741,7 @@ struct ImPlotBench : App
             return snprintf(buff, size, "%.0fk", value / 1000);
         };
 
-        if (ImPlot::BeginPlot("##Stats", ImVec2(-1, -1), ImPlotFlags_NoChild))
+        if (ImPlot::BeginPlot("##Stats", ImVec2(-1, -1)))
         {
             ImPlot::SetupAxis(ImAxis_X1, "Elements");
             ImPlot::SetupAxis(ImAxis_Y1, "Time [ms]");
