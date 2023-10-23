@@ -149,7 +149,10 @@ App::App(std::string title, int w, int h, int argc, char const *argv[])
     const bool no_vsync = result["vsync"].as<bool>();
     const bool use_msaa = result["msaa"].as<bool>();
     const bool im_style = result["imgui"].as<bool>();
+
+#if defined(_WIN32)
     NvOptimusEnablement = AmdPowerXpressRequestHighPerformance = result["gpu"].as<bool>();
+#endif
     UsingDGPU = result["gpu"].as<bool>();
 
 #ifdef _DEBUG
