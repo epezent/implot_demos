@@ -70,7 +70,7 @@ struct ImFilter : public App {
         ImGui::SetNextWindowPos(ImVec2(0,0), ImGuiCond_Always);
         ImGui::SetNextWindowSize(GetWindowSize(), ImGuiCond_Always);
         ImGui::Begin("Filter",nullptr, ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoTitleBar);
-        ImGui::BeginChild("ChildL", ImVec2(ImGui::GetWindowContentRegionWidth() * 0.5f, -1));
+        ImGui::BeginChild("ChildL", ImVec2(ImGui::GetWindowContentRegionMax().x * 0.5f, -1));
         ImGui::Text("Input:    x(t) = A1*sin(2*pi*F1*t) + A2*sin(2*pi*F1*t) + noise");
         ImGui::Separator();
         

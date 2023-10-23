@@ -18,6 +18,10 @@ FetchContent_MakeAvailable(glfw)
 FetchContent_Declare(iir GIT_REPOSITORY https://github.com/berndporr/iir1) 
 FetchContent_MakeAvailable(iir)
 
+if (LINUX)
+  add_compile_options(-O3 -march=native)
+endif()
+
 if (WIN32)
   set(CMAKE_USE_SCHANNEL ON)
 endif()
@@ -82,7 +86,14 @@ add_library(imgui ${IMGUI_HEADERS} ${IMGUI_SRC})
 if(MSVC)
   target_compile_options(imgui PRIVATE /W4 /WX /arch:AVX2 /fp:fast)
 endif()
-target_link_libraries(imgui PUBLIC glfw glad OpenGL::GL imm32)
+
+if(WIN32)
+  target_link_libraries(imgui PUBLIC glfw glad OpenGL::GL imm32)
+else()
+  target_link_libraries(imgui PUBLIC glfw glad OpenGL::GL)
+endif()
+
+
 target_compile_definitions(imgui PRIVATE IMGUI_DLL_EXPORT)
 
 include_directories(../imgui/ ../imgui/examples ../imgui/examples/libs/gl3w ../imgui/backends ../imgui/misc/cpp)
