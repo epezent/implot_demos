@@ -215,7 +215,7 @@ void TickerTooltip(const TickerData& data, bool span_subplots = false) {
             ImGui::Text("Close:");  ImGui::SameLine(60); ImGui::Text("$%.2f", data.close[idx]);
             ImGui::Text("High:");   ImGui::SameLine(60); ImGui::Text("$%.2f", data.high[idx]);
             ImGui::Text("Low:");    ImGui::SameLine(60); ImGui::Text("$%.2f", data.low[idx]);
-            ImGui::Text("Volume:"); ImGui::SameLine(60); ImGui::Text(fmt::format(std::locale("en_US.UTF-8"),"{:L}", (int)(data.volume[idx])).c_str());
+            ImGui::Text("Volume:"); ImGui::SameLine(60); ImGui::Text("%s", fmt::format(std::locale("en_US.UTF-8"),"{:L}", (int)(data.volume[idx])).c_str());
             ImGui::EndTooltip();
         }
     }
