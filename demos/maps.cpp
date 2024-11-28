@@ -319,7 +319,7 @@ struct ImMaps : public App {
     void Update() override {
         static int renders = 0;
         static bool debug = false;
-        if (ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_A)))
+        if (ImGui::IsKeyPressed(ImGuiKey_A))
             debug = !debug;
 
         ImGui::SetNextWindowPos({0,0});
@@ -355,7 +355,7 @@ struct ImMaps : public App {
                 auto [bmin,bmax] = coord.bounds();
                 if (tile != nullptr) {
                     auto col = debug ? ((coord.x % 2 == 0 && coord.y % 2 != 0) || (coord.x % 2 != 0 && coord.y % 2 == 0))? ImVec4(1,0,1,1) : ImVec4(1,1,0,1) : ImVec4(1,1,1,1);             
-                    ImPlot::PlotImage("##Tiles",(void*)(intptr_t)tile->image.ID,bmin,bmax,{0,0},{1,1},col);
+                    ImPlot::PlotImage("##Tiles",(ImTextureID)(intptr_t)tile->image.ID,bmin,bmax,{0,0},{1,1},col);
                 }
                 if (debug) 
                     ImPlot::PlotText(coord.label().c_str(),(bmin.x+bmax.x)/2,(bmin.y+bmax.y)/2);                
