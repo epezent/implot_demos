@@ -38,13 +38,13 @@ namespace fs = std::filesystem;
 
 #define PI 3.14159265359
 
-int long2tilex(double lon, int z) { 
-	return (int)(floor((lon + 180.0) / 360.0 * (1 << z))); 
+int long2tilex(double lon, int z) {
+	return (int)(floor((lon + 180.0) / 360.0 * (1 << z)));
 }
 
-int lat2tiley(double lat, int z) { 
+int lat2tiley(double lat, int z) {
     double latrad = lat * PI/180.0;
-	return (int)(floor((1.0 - asinh(tan(latrad)) / PI) / 2.0 * (1 << z))); 
+	return (int)(floor((1.0 - asinh(tan(latrad)) / PI) / 2.0 * (1 << z)));
 }
 
 double tilex2long(int x, int z) {
@@ -69,14 +69,14 @@ struct TileCoord {
     std::tuple<ImPlotPoint,ImPlotPoint> bounds() const {
         double n = std::pow(2,z);
         double t = 1.0 / n;
-        return { 
-                   { x*t     , (1+y)*t } , 
-                   { (1+x)*t , (y)*t   } 
+        return {
+                   { x*t     , (1+y)*t } ,
+                   { (1+x)*t , (y)*t   }
                };
     }
 };
 
-bool operator<(const TileCoord& l, const TileCoord& r ) { 
+bool operator<(const TileCoord& l, const TileCoord& r ) {
     if ( l.z < r.z )  return true;
     if ( l.z > r.z )  return false;
     if ( l.x < r.x )  return true;
@@ -118,7 +118,7 @@ public:
     TileManager() {
         start_workers();
     }
- 
+
     inline ~TileManager() {
         {
             std::unique_lock<std::mutex> lock(m_queue_mutex);
@@ -142,26 +142,26 @@ public:
 
         int z    = 0;
         double r = 1.0 / pow(2,z);
-        while (r > units_per_tile_x && r > units_per_tile_y && z < MAX_ZOOM) 
+        while (r > units_per_tile_x && r > units_per_tile_y && z < MAX_ZOOM)
             r = 1.0 / pow(2,++z);
-        
+
         m_region.clear();
         if (!append_region(z, min_x, min_y, size_x, size_y) && z > 0) {
-            append_region(--z, min_x, min_y, size_x, size_y); 
+            append_region(--z, min_x, min_y, size_x, size_y);
             std::reverse(m_region.begin(),m_region.end());
-        } 
+        }
         return m_region;
-    }    
+    }
 
     std::shared_ptr<Tile> request_tile(TileCoord coord) {
         std::lock_guard<std::mutex> lock(m_tiles_mutex);
-        if (m_tiles.count(coord)) 
-            return get_tile(coord);   
-        else if (fs::exists(coord.path())) 
-            return load_tile(coord);  
-        else 
-            download_tile(coord);        
-        return nullptr;        
+        if (m_tiles.count(coord))
+            return get_tile(coord);
+        else if (fs::exists(coord.path()))
+            return load_tile(coord);
+        else
+            download_tile(coord);
+        return nullptr;
     }
 
     int tiles_loaded() const     { return m_loads;     }
@@ -175,29 +175,29 @@ private:
     bool append_region(int z, double min_x, double min_y, double size_x, double size_y) {
         int k = pow(2,z);
         double r = 1.0 / k;
-        int xa = min_x * k; 
-        int xb = xa + ceil(size_x / r) + 1; 
+        int xa = min_x * k;
+        int xb = xa + ceil(size_x / r) + 1;
         int ya = min_y * k;
-        int yb = ya + ceil(size_y / r) + 1;        
+        int yb = ya + ceil(size_y / r) + 1;
         xb = std::clamp(xb,0,k);
         yb = std::clamp(yb,0,k);
         bool covered = true;
-        for (int x = xa; x < xb; ++x) {                
+        for (int x = xa; x < xb; ++x) {
             for (int y = ya; y < yb; ++y) {
                 TileCoord coord{z,x,y};
                 std::shared_ptr<Tile> tile = request_tile(coord);
                 m_region.push_back({coord,tile});
-                if (tile == nullptr || tile->state != TileState::Loaded)    
+                if (tile == nullptr || tile->state != TileState::Loaded)
                     covered = false;
             }
         }
         return covered;
     }
 
-    void download_tile(TileCoord coord) { 
+    void download_tile(TileCoord coord) {
         auto dir = coord.dir();
         fs::create_directories(dir);
-        if (fs::exists(dir)) {       
+        if (fs::exists(dir)) {
             m_tiles[coord] = std::make_shared<Tile>(Downloading);
             {
                 std::unique_lock<std::mutex> lock(m_queue_mutex);
@@ -212,7 +212,7 @@ private:
             return m_tiles[coord];
         else if (m_tiles[coord]->state == OnDisk)
             return load_tile(coord);
-        return nullptr; 
+        return nullptr;
     }
 
     std::shared_ptr<Tile> load_tile(TileCoord coord) {
@@ -222,7 +222,7 @@ private:
         if (m_tiles[coord]->image.LoadFromFile(path.c_str())) {
             m_tiles[coord]->state = TileState::Loaded;
             m_loads++;
-            return m_tiles[coord];  
+            return m_tiles[coord];
         }
         m_fails++;
         printf("TileManager[00]: Failed to load \"%s\"\n", path.c_str());
@@ -269,18 +269,18 @@ private:
                             CURLcode cc = curl_easy_perform(curl);
                             fclose(fp);
                             if (cc != CURLE_OK) {
-                                printf("TileManager[%02d]: Failed to download: \"%s\"\n", thrd, url.c_str());  
+                                printf("TileManager[%02d]: Failed to download: \"%s\"\n", thrd, url.c_str());
                                 long rc = 0;
                                 curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &rc);
-                                if (!((rc == 200 || rc == 201) && rc != CURLE_ABORTED_BY_CALLBACK))  
-                                    printf("TileManager[%02d]: Response code: %d\n",thrd,rc);      
+                                if (!((rc == 200 || rc == 201) && rc != CURLE_ABORTED_BY_CALLBACK))
+                                    printf("TileManager[%02d]: Response code: %ld\n",thrd,rc);
                                 fs::remove(coord.path());
                                 success = false;
-                            }      
+                            }
                         }
                         else {
-                            printf("TileManager[%02d]: Failed to open or create file \"%s\"\n",thrd, path.c_str());   
-                            success = false;                    
+                            printf("TileManager[%02d]: Failed to open or create file \"%s\"\n",thrd, path.c_str());
+                            success = false;
                         }
                         if (success) {
                             m_downloads++;
@@ -319,7 +319,7 @@ struct ImMaps : public App {
     void Update() override {
         static int renders = 0;
         static bool debug = false;
-        if (ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_A)))
+        if (ImGui::IsKeyPressed(ImGuiKey_A))
             debug = !debug;
 
         ImGui::SetNextWindowPos({0,0});
@@ -354,19 +354,19 @@ struct ImMaps : public App {
                 std::shared_ptr<Tile> tile = pair.second;
                 auto [bmin,bmax] = coord.bounds();
                 if (tile != nullptr) {
-                    auto col = debug ? ((coord.x % 2 == 0 && coord.y % 2 != 0) || (coord.x % 2 != 0 && coord.y % 2 == 0))? ImVec4(1,0,1,1) : ImVec4(1,1,0,1) : ImVec4(1,1,1,1);             
-                    ImPlot::PlotImage("##Tiles",(void*)(intptr_t)tile->image.ID,bmin,bmax,{0,0},{1,1},col);
+                    auto col = debug ? ((coord.x % 2 == 0 && coord.y % 2 != 0) || (coord.x % 2 != 0 && coord.y % 2 == 0))? ImVec4(1,0,1,1) : ImVec4(1,1,0,1) : ImVec4(1,1,1,1);
+                    ImPlot::PlotImage("##Tiles",(ImTextureID)(intptr_t)tile->image.ID,bmin,bmax,{0,0},{1,1},col);
                 }
-                if (debug) 
-                    ImPlot::PlotText(coord.label().c_str(),(bmin.x+bmax.x)/2,(bmin.y+bmax.y)/2);                
-                renders++;                
+                if (debug)
+                    ImPlot::PlotText(coord.label().c_str(),(bmin.x+bmax.x)/2,(bmin.y+bmax.y)/2);
+                renders++;
             }
             ImPlot::PushPlotClipRect();
             static const char* label = ICON_FA_COPYRIGHT " OpenStreetMap Contributors";
             auto label_size = ImGui::CalcTextSize(label);
             auto label_off  = ImPlot::GetStyle().MousePosPadding;
             ImPlot::GetPlotDrawList()->AddText({pos.x + label_off.x, pos.y+size.y-label_size.y-label_off.y},IM_COL32_BLACK,label);
-            ImPlot::PopPlotClipRect();            
+            ImPlot::PopPlotClipRect();
             ImPlot::EndPlot();
         }
         ImGui::End();
@@ -378,5 +378,5 @@ struct ImMaps : public App {
 int main(int argc, char const *argv[])
 {
     ImMaps app("ImMaps",960,540,argc,argv);
-    app.Run();    
+    app.Run();
 }

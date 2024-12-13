@@ -132,7 +132,7 @@ App::App(std::string title, int w, int h, int argc, char const *argv[])
         ("h,height", "Window height override",cxxopts::value<int>())
         ("g,gpu", "Use discrete GPU on hybrid laptops")
         ("help","Show Help");
-    
+
 
     auto result = options.parse(argc,argv);
     if (result.count("help"))
@@ -144,12 +144,14 @@ App::App(std::string title, int w, int h, int argc, char const *argv[])
     if (result.count("width"))
         w = result["width"].as<int>();
     if (result.count("height"))
-        h = result["height"].as<int>(); 
+        h = result["height"].as<int>();
 
     const bool no_vsync = result["vsync"].as<bool>();
     const bool use_msaa = result["msaa"].as<bool>();
     const bool im_style = result["imgui"].as<bool>();
+#ifdef _WIN32
     NvOptimusEnablement = AmdPowerXpressRequestHighPerformance = result["gpu"].as<bool>();
+#endif
     UsingDGPU = result["gpu"].as<bool>();
 
 #ifdef _DEBUG
@@ -201,10 +203,10 @@ App::App(std::string title, int w, int h, int argc, char const *argv[])
     {
         fprintf(stderr, "Failed to initialize OpenGL loader!\n");
         abort();
-    } 
+    }
 
-    const GLubyte* vendor = glGetString(GL_VENDOR); 
-    const GLubyte* renderer = glGetString(GL_RENDERER); 
+    const GLubyte* vendor = glGetString(GL_VENDOR);
+    const GLubyte* renderer = glGetString(GL_RENDERER);
 
     title +=  " - ";
     title += reinterpret_cast< char const * >(renderer);
@@ -218,7 +220,7 @@ App::App(std::string title, int w, int h, int argc, char const *argv[])
     ImGui_ImplOpenGL3_Init(glsl_version);
 
     if (use_msaa)
-        glEnable(GL_MULTISAMPLE); 
+        glEnable(GL_MULTISAMPLE);
 
     if (im_style) {
         ImGui::StyleColorsDark();
