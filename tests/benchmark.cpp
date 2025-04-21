@@ -580,7 +580,7 @@ struct ImPlotBench : App
                     running = false;
                     run_t2 = Clock::now();
                     size_t run_span = (size_t)std::chrono::duration_cast<std::chrono::microseconds>(run_t2 - run_t1).count();
-                    printf("Run completed in %u us (%.3f s)\n", run_span, run_span / 1000000.0f);
+                    printf("Run completed in %zu us (%.3f s)\n", run_span, run_span / 1000000.0f);
                 }
             }
         }
@@ -645,7 +645,7 @@ struct ImPlotBench : App
         }
         ImGui::SameLine();
         static char start_str[32];
-        sprintf(start_str, running ? "Stop (%u)" : "Start (%u)", m_queue.size());
+        sprintf(start_str, running ? "Stop (%zu)" : "Start (%zu)", m_queue.size());
         if (ImGui::Button(start_str, ImVec2(-1, 0)))
         {
             running = !running;
@@ -747,10 +747,12 @@ struct ImPlotBench : App
             ImPlot::SetupAxis(ImAxis_Y1, "Time [ms]");
             ImPlot::SetupAxesLimits(0, kMaxElems, 0, 50);
             ImPlot::SetupAxisFormat(ImAxis_X1, fmtr);
-            ImPlot::SetupAxisLimits(ImAxis_Y2, 0, 500, ImPlotCond_Once);
             ImPlot::SetupLegend(ImPlotLocation_East, ImPlotLegendFlags_Outside);
             if (show_fps)
+            {
                 ImPlot::SetupAxis(ImAxis_Y2, "FPS [Hz]", ImPlotAxisFlags_Opposite);
+                ImPlot::SetupAxisLimits(ImAxis_Y2, 0, 500, ImPlotCond_Once);
+            }
 
             for (auto &collection : m_records[selected_branch])
             {

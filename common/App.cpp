@@ -12,6 +12,9 @@
 #if defined(_WIN32)
     extern "C" __declspec(dllexport) unsigned long NvOptimusEnablement = 0;
     extern "C" __declspec(dllexport) unsigned long AmdPowerXpressRequestHighPerformance = 0;
+#else
+    unsigned long NvOptimusEnablement = 0;
+    unsigned long AmdPowerXpressRequestHighPerformance = 0;
 #endif
 
 void StyeColorsApp()
