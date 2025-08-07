@@ -1,6 +1,14 @@
 cmake_minimum_required(VERSION 3.11.0)
 project(implot_demos VERSION 0.1.0)
 
+# Workaround for the cmake generation stage:
+# https://github.com/libsdl-org/SDL/issues/6454
+
+enable_language(OBJC)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+
 ###############################################################################
 # 3RD PARTY LIBS
 ###############################################################################
@@ -82,7 +90,10 @@ add_library(imgui ${IMGUI_HEADERS} ${IMGUI_SRC})
 if(MSVC)
   target_compile_options(imgui PRIVATE /W4 /WX /arch:AVX2 /fp:fast)
 endif()
-target_link_libraries(imgui PUBLIC glfw glad OpenGL::GL imm32)
+target_link_libraries(imgui PUBLIC glfw glad OpenGL::GL)
+if(MSVC)
+  target_link_libraries(imgui PUBLIC imm32)
+endif()
 target_compile_definitions(imgui PRIVATE IMGUI_DLL_EXPORT)
 
 include_directories(../imgui/ ../imgui/examples ../imgui/examples/libs/gl3w ../imgui/backends ../imgui/misc/cpp)
@@ -110,9 +121,12 @@ target_compile_definitions(implot PUBLIC IMPLOT_DEBUG IMPLOT_DLL_EXPORT IMPLOT_B
 set_property(TARGET implot PROPERTY CXX_STANDARD 11)
 if(MSVC)
   target_compile_options(implot PRIVATE /W4 /WX /arch:AVX2 /fp:fast /permissive-) 
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+  target_compile_options(implot PRIVATE -Wall -Wextra -pedantic -Werror -O3)
 else()
   target_compile_options(implot PRIVATE -Wall -Wextra -pedantic -Werror -mavx2 -Ofast)
 endif()
+
 
 include_directories(../implot/)
 
@@ -158,13 +172,13 @@ add_executable(perlin "demos/perlin.cpp")
 target_link_libraries(perlin app)
 target_include_directories(perlin PRIVATE "3rdparty")
 
-# mandel demo
-add_executable(mandel "demos/mandel.cpp")
-target_link_libraries(mandel app)
-target_include_directories(mandel PRIVATE "3rdparty")
-if (MSVC)
-  target_compile_options(mandel PRIVATE /arch:AVX2 /fp:fast /openmp)
-endif()
+# # mandel demo
+# add_executable(mandel "demos/mandel.cpp")
+# target_link_libraries(mandel app)
+# target_include_directories(mandel PRIVATE "3rdparty")
+# if (MSVC)
+#   target_compile_options(mandel PRIVATE /arch:AVX2 /fp:fast /openmp)
+# endif()
 
 # graph demo
 add_executable(graph "demos/graph.cpp")

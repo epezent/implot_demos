@@ -27,10 +27,8 @@ git clone https://github.com/ocornut/imgui
 2. Build with CMake, e.g.:
 ```shell
 cd implot_demos
-mkdir build
-cd build
-cmake ..
-cmake --build . --config Release
+cmake -G"Unix Makefiles" -B build -S .
+cmake --build build --config Release --parallel 8
 ```
 
 ## Demos
