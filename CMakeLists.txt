@@ -9,7 +9,7 @@ project(implot_demos VERSION 0.1.0)
 include(FetchContent) 
 # set(FETCHCONTENT_FULLY_DISCONNECTED ON)
 
-FetchContent_Declare(fmt GIT_REPOSITORY https://github.com/fmtlib/fmt)
+FetchContent_Declare(fmt GIT_REPOSITORY https://github.com/fmtlib/fmt GIT_TAG main)
 FetchContent_MakeAvailable(fmt)
 
 FetchContent_Declare(glfw GIT_REPOSITORY https://github.com/glfw/glfw) 
